@@ -1,0 +1,100 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Models\User as ModelsUser;
+use App\Providers\RouteServiceProvider;
+use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
+use Mail;
+use App\Mail\DartMail;
+class LoginController extends Controller
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Login Controller
+    |--------------------------------------------------------------------------
+    |
+    | This controller handles authenticating users for the application and
+    | redirecting them to your home screen. The controller uses a trait
+    | to conveniently provide its functionality to your applications.
+    |
+    */
+
+    use AuthenticatesUsers;
+
+    /**
+     * Where to redirect users after login.
+     *
+     * @var string
+     */
+    protected $redirectTo = RouteServiceProvider::HOME;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('guest')->except('logout');
+    }
+
+    protected function authenticated(Request $request, $user)
+    {
+
+        $user = Auth::user();   
+        
+        if($user->u_type == 'F' )
+
+        {
+            $this->logout($request);
+            $this->sendFailedLoginRoleResponse($request, 1);
+        }
+        if($user->u_type == 'M' || $user->u_type == 'QA' || $user->u_type == 'A')
+        {
+            // for login details save 
+            $time=date_default_timezone_set("Asia/Kolkata");
+            $action=1;
+            $user_id=$user->id;
+            $u_type=$user->u_type;
+            $time=date('H:i a');
+            $user_ip = request()->ip(); 
+            logindetails($user_id,$action,$u_type,$user_ip,$time);
+
+            // send notification threw the mail 
+            date_default_timezone_set("Asia/Kolkata");
+            $message['date'] = date('H:i:s a');
+            $query="SELECT name FROM users where u_type = 'CEO' and is_deleted = 0";
+            $message['user_name'] = DB::select($query)[0]->name;
+            $message['host'] = $_SERVER["REMOTE_ADDR"];
+            $message['manager_name'] = $user->name;
+            $message['status'] = "L";
+            $data = $message;
+            $email = "gaurav.negi1830@gmail.com";
+            Mail::to($email)
+                ->send(new DartMail($data));
+            // Mail::to(env('MAIL_CC'))->send(new DartMail($data));
+            if($user->u_type == 'M' || $user->u_type == 'QA')
+            {
+                return redirect('/qualitycheck');
+            }
+        }
+
+
+    }
+
+    protected function sendFailedLoginRoleResponse(Request $request, $cc=0)
+    {
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            $this->username() => ['Facilitators are not authorized to login.'],
+        ]);
+
+    }
+}

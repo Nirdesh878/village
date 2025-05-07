@@ -1,0 +1,628 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use App\Models\UserMapping;
+use App\Rules\CheckDeleted;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\DartTeam;
+use Carbon\Carbon;
+use PDF;
+
+class UsersController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->curdate = Carbon::now()->format('d-m-Y');
+    }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        $data = [];
+        $user = Auth::User();
+        $u_type = $user->u_type;
+        $user_id =$user->id;
+        // prd($user_id);
+        if (!empty($request->get('Search'))) {
+             Session::put('user_filter_session',$request->all());
+
+        }
+        if (!empty($request->get('clear'))) {
+            $request->session()->forget('user_filter_session');
+        }
+        if ($request->ajax()) {
+            $session_data = Session::get('user_filter_session');
+            $start = (int)$request->post('start');
+            $limit = (int)$request->post('length');
+            $txt_search = $request->post('search')['value'];
+
+            $query = DB::table('users as a')
+                    ->leftjoin('agency as b', 'a.agency_id','=','b.agency_id')
+                    ->select('a.*','b.agency_name');
+            if($u_type == 'A')
+            {
+                $query->where('a.u_type',  '!=', 'CEO' );
+                $query->where('a.u_type',  '!=', 'A' );
+                // $query->where('a.id',  '=', $user_id);
+
+            }
+            if (!empty($session_data['Search'])) {
+                if(!empty($session_data['user_type']))
+                    if ($session_data['user_type']!='')
+                        $query->where('a.u_type',  '=', "".$session_data['user_type']."");
+            }
+                    // prd($query);
+            if($txt_search!='')
+            {
+                $query->Where(function ($query) use($txt_search) {
+                    $query->orwhere('a.name', 'like', '%'.$txt_search.'%');
+                    $query->orwhere('a.email', 'like', '%'.$txt_search.'%');
+                });
+            }
+
+            $query->where('a.is_deleted', '=', 0);
+            $total = $query->count();
+            $user = $query ->orderBy('a.created_at','desc')
+                        ->limit($limit)
+                        ->offset($start)
+                        ->get()->toArray();
+            $query = "SELECT COUNT(u_type) as count FROM `users` a WHERE a.u_type = 'CEO'  AND a.is_deleted = 0";
+            $u_ceo = DB::select($query);
+            $u_count = $u_ceo[0]->count;
+
+            // $super_admin = count()
+            foreach ($user as $users)
+            {
+                if($users->u_type == 'M')
+                {
+                    $user_type = 'District Manager';
+                }
+                if($users->u_type == 'QA')
+                {
+                    $user_type = 'Quality Analyst';
+                }
+                if($users->u_type == 'F')
+                {
+                    $user_type = 'FACILITATOR';
+                }
+                if($users->u_type == 'A')
+                {
+                    $user_type = 'Admin';
+                }
+                if($users->u_type == 'CEO')
+                {
+                    $user_type = 'Super-Admin';
+                }
+
+                $row = [];
+                $row[] = ++$start;
+                //$row[] = $users->agency_name;
+                $row[] = $users->name;
+                $row[] = $users->email;
+                $row[] = $user_type;
+                $row[] = $users->password_show;
+                $row[] = $users->status_inex == 'internal' ? 'Internal' : 'External';
+
+                $row[] =change_date_month_name_char($users->created_at);
+                $row[] =change_date_month_name_char($users->updated_at);
+                $row[] = $users->status == 'A' ? '<span class="status-active">Active</span>' : '<span class="status-inactive">InActive</span>';
+
+                $btns= '';
+
+                if($users->u_type != 'CEO')
+                {
+                    $btns .= '<a class="btn btn-primary btn-link btn-sm" rel="tooltip" title="Edit" data-original-title="Edit" href="'. route('users.edit', $users->id).'" style="padding:0px;margin:0px"><i class="c-white-500 ti-pencil"></i></a>';
+                    $btns .= ' <a href="javascript:;" class="btn btn-danger btn-link btn-sm" rel="tooltip" title="Remove" onclick="fn_delete(\'' . $users->id . '\')" title="Delete User"  style="padding:0px;margin:0px"><i class="c-white-500 ti-trash"></i></a>';
+                }
+                else{
+                    $btns .= '<a class="btn btn-primary btn-link btn-sm" rel="tooltip" title="Edit" data-original-title="Edit" href="'. route('users.edit', $users->id).'" style="padding:0px;margin:0px"><i class="c-white-500 ti-pencil"></i></a>';
+                    if($u_count > 1)
+                    {
+                        $btns .= ' <a href="javascript:;" class="btn btn-danger btn-link btn-sm" rel="tooltip" title="Remove" onclick="fn_delete(\'' . $users->id . '\')" title="Delete User"  style="padding:0px;margin:0px"><i class="c-white-500 ti-trash"></i></a>';
+                    }
+                }
+                $row[] = $btns;
+                $data[] = $row;
+             }
+
+            $output = array(
+                "draw"            => $request->post('draw'),
+                "recordsTotal"    => $total,
+                "recordsFiltered" => $total,
+                "data"            => $data,
+            );
+            echo json_encode($output);
+            exit;
+        }
+        return view('users.list')->with($data);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        $data = [];
+        $user = Auth::User();
+        // prd($user);
+        $u_type = $user->u_type;
+
+        $data['agency'] = DB::table('agency')
+                        ->where('is_deleted', '=', 0)
+                        ->get()->toArray();
+        $data['gender'] = DB::table('mst_gender')
+                        ->where('is_deleted', '=', 0)
+                        ->get()->toArray();
+
+
+        $query = "SELECT * from mst_roles a WHERE a.is_deleted = 0 ";
+
+        if($u_type == 'A')
+        {
+            $query .="AND a.roles_slug !='CEO' ";
+            $query .="AND a.roles_slug !='A' ";
+        }
+        $query .= " ORDER BY a.position ASC";
+        $data['roles'] = DB::select($query);
+
+            //  prd($data['roles']);
+        $data['users'] = DB::table('users')
+                        ->where('is_deleted', '=', 0)
+                        ->get()->toArray();
+        $data['countries'] = DB::table('countries')
+                        ->where('is_deleted', '=', 0)
+                        ->get()->toArray();
+        //prd($data['roles']);
+        return view('users.add')->with($data);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        $view = 'users.add';
+
+        /* Check post either add or update */
+        if ($request->isMethod('post')) {
+            // prd($request->all());
+            try {
+
+                $validation_arr = [
+
+                    'name' => ['required'],
+                    'gender' => ['required'],
+                    //'email' => ['required', 'unique:users'],
+                    'email' => ['required', new CheckDeleted],
+                    'mobile' => ['required'],
+                    'address' => ['required'],
+                    'city' => ['required'],
+                    'pincode' => ['required'],
+                    'u_type' => ['required'],
+                    'status_inex' => ['required'],
+                    'status' => ['required'],
+                    'password' => ['required', 'string', 'min:8', 'confirmed'],
+                ];
+
+                $validator = Validator::make($request->all(), $validation_arr);
+                if ($validator->fails()) {
+                    return redirect()->back()->withErrors($validator)->withInput();
+                }
+                $result = DB::transaction(function () use ($request) {
+
+                $temp_rand = '';
+
+                $user = Auth::User();
+
+                $user_details = new User();
+                if($request->post('agency_id') != '')
+                {
+                    $agency_id_save = implode(',',$request->post('agency_id'));
+                    $user_details->agency_id = $agency_id_save;
+                }
+
+
+                $user_details->name = $request->post('name');
+                $user_details->gender = $request->post('gender');
+                $user_details->email = $request->post('email');
+                $user_details->mobile = $request->post('mobile');
+                $user_details->adress = $request->post('address');
+                $user_details->city = $request->post('city');
+                $user_details->pincode = $request->post('pincode');
+                $user_details->u_type = $request->post('u_type');
+                $user_details->parent_id = $request->post('parent_id');
+                $user_details->status_inex = $request->post('status_inex');
+                $user_details->status = $request->post('status');
+                $temp_rand = $request->post('name');
+                $query = "Select role_short_name,id from mst_roles where is_deleted=0 and roles_slug='".$request->post('u_type')."'";
+                $result = DB::select($query);
+
+
+                $uin = 'IN'.$result[0]->role_short_name.''.rand(1000000, 9999999);
+                $user_details->uin = $uin;
+                $user_details->roles_c = $result[0]->id;
+
+                $user_details->tkn = substr(md5(mt_rand()), 0, 16);
+                $query = "Select gender_short_name,id from mst_gender where is_deleted=0 and gender_short_name='".$request->post('gender')."'";
+                $result = DB::select($query);
+                $user_details->gender_c = $result[0]->id;
+                $user_details->created_by = $user->id;
+                $user_details->created_at = date('Y-m-d H:i:s');
+
+                if($request->post('password')!='')
+                {
+                    $user_details->password = Hash::make($request->post('password'));
+                    $user_details->password_show = $request->post('password');
+                }
+                $result = $user_details->save();
+                $admin_country = $request->post('admin_country');
+                if ($user_details->u_type == 'A' || $user_details->u_type == 'QA' || $user_details->u_type == 'CEO') {
+                    if ($admin_country !='') {
+                        $user_location = new UserMapping();
+                        $user_location->user_id = $user_details->id;
+                        $user_location->country_id = $admin_country;
+                        $result = $user_location->save();
+                    }
+                }
+
+                if($user_details->u_type == 'M' || $user_details->u_type == 'F')
+                {
+                    $country = $request->post('country');
+                    $state = $request->post('state');
+                    $district_id = $request->post('district');
+
+                    if(count($state) > 0)
+                    {
+                        //prd($country);
+                        foreach($state as $key => $value)
+                        {
+                            //prd($district_id[$key]);
+                            if(!empty($district_id[$key]))
+                            {
+                                $dist_str =implode(",",$district_id[$key]);
+                            }
+                            else{
+                                $dist_str = '';
+                            }
+                            //prd($dist_str);
+                            $participant_details = new UserMapping();
+                            $participant_details->user_id = $user_details->id;
+                            $participant_details->country_id = $country;
+                            $participant_details->state_id = $value;
+                            //$participant_details->state_id = $state[$key];
+                            $participant_details->district_id = $dist_str;
+                            $participant_details->is_deleted = 0;
+                            $participant_details->created_by = $user->id;
+                            $participant_details->created_at = date('Y-m-d H:i:s');
+
+                            $result = $participant_details->save();
+
+                        }
+                    }
+
+                }
+                if ($result) {
+                    return true;
+                }
+            });
+            //die($result);
+                if ($result == 1) {
+                    //die($result);
+                    return redirect('users')->with(['message' => 'User saved successfully.']);
+                }
+            } catch (\Exception $e) {
+                prd($e->getMessage());
+                return redirect()->back()->withErrors(['error' => $e->getMessage()])->withInput();
+            }
+        }
+
+        return view($view);
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\Response
+     */
+    public function show(User $user)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(User $user)
+    {
+        //prd($user);
+        $data['agency'] = DB::table('agency')
+                        ->where('is_deleted', '=', 0)
+                        ->get()->toArray();
+        $data['gender'] = DB::table('mst_gender')
+                        ->where('is_deleted', '=', 0)
+                        ->get()->toArray();
+        $data['roles'] = DB::table('mst_roles')
+
+                        ->orderBy('position','ASC')
+                        ->where('is_deleted', '=', 0)
+                        ->get()->toArray();
+        $data['users_mappings'] = DB::table('user_location_relation')
+                        ->where('is_deleted', '=', 0)
+                        ->where('user_id', '=', $user->id)
+                        ->get()->toArray();
+        $data['countries'] = DB::table('countries')
+                        ->where('is_deleted', '=', 0)
+                        ->get()->toArray();
+        $data['states'] = DB::table('states')
+                        ->where('is_deleted', '=', 0)
+                        ->where('country_id', '=',  $data['users_mappings'][0]->country_id)
+                        ->get()->toArray();
+        $data['edit'] = 1;
+        //prd($data);
+        return view('users.edit', compact('user'))->with($data);
+    }
+
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Users  $users
+     * @return \Illuminate\Http\Response
+     */
+   
+    public function update(Request $request, User $user)
+    {
+        $view = 'users.edit';
+
+        /* Check post either add or update */
+        if ($request->isMethod('PATCH')) { //prd($request->all());
+            try {
+                
+                    $validation_arr = [
+                        'name' => ['required'],
+                        'gender' => ['required'],
+                        // 'email' => ['required', new CheckDeleted],
+                        // 'email' => 'unique:users,email,' . $user->id,
+                         'email'=>['required','email',Rule::unique('users','email')->ignore($request->input('id'))->where('is_deleted',0)],
+                        'mobile' => ['required'],
+                        'adress' => ['required'],
+                        'city' => ['required'],
+                        'pincode' => ['required'],
+                        'u_type' => ['required'],
+                        'status_inex' => ['required'],
+                        'status' => ['required'],
+                        'password' => ['required', 'string', 'min:8', 'confirmed'],
+                    ];
+
+                    $validator = Validator::make($request->all(), $validation_arr);
+                    if ($validator->fails()) {
+                        // return 'validation_error';
+                        return redirect()->back()->withErrors($validator)->withInput();
+                    }
+                    $result = DB::transaction(function () use ($request, $user) { 
+                        $login_user = Auth::User();
+                        $user_details = User::find($user->id);
+                        if ($request->post('agency_id') != '') {
+                            $agency_id_save = implode(',', $request->post('agency_id'));
+                            $user_details->agency_id = $agency_id_save;
+                        }
+
+                        $user_details->name = $request->post('name');
+                        $user_details->gender = $request->post('gender');
+                        $user_details->email = $request->post('email');
+                        $user_details->mobile = $request->post('mobile');
+                        $user_details->adress = $request->post('adress');
+                        $user_details->city = $request->post('city');
+                        $user_details->pincode = $request->post('pincode');
+                        $user_details->u_type = $request->post('u_type');
+                        $user_details->parent_id = $request->post('parent_id');
+                        $user_details->status_inex = $request->post('status_inex');
+                        $user_details->status = $request->post('status');
+                        $user_details->updated_by = $login_user->id;
+                        $user_details->updated_at = date('Y-m-d H:i:s');
+
+                        $query = "Select role_short_name,id from mst_roles where is_deleted=0 and roles_slug='" . $user_details->u_type . "'";
+                        $result = DB::select($query);
+                        $user_details->roles_c = $result[0]->id;
+
+                        $query = "Select gender_short_name,id from mst_gender where is_deleted=0 and gender_short_name='" . $user_details->gender . "'";
+                        $result = DB::select($query);
+                        $user_details->gender_c = $result[0]->id;
+
+                        if ($request->post('password') != '') {
+                            $user_details->password = Hash::make($request->post('password'));
+                            $user_details->password_show = $request->post('password');
+                        }
+                        $result = $user_details->save();
+                        $admin_country = $request->post('admin_country');
+                        if ($user_details->u_type == 'A' || $user_details->u_type == 'QA' || $user_details->u_type == 'CEO') {
+                            if ($admin_country != '') {
+                                // prd($admin_country);
+                                $user_location = new UserMapping();
+                                $user_location->user_id = $user_details->id;
+                                $user_location->country_id = $admin_country;
+                                $result = $user_location->save();
+                            }
+                        }
+
+                        if ($user_details->u_type == 'M' || $user_details->u_type == 'F') {
+                            $country = $request->post('country');
+                            $state = $request->post('state');
+                            $district_id = $request->post('district');
+                            //prd($district_id);
+                            if (count($state) > 0) {
+                                UserMapping::where('user_id', '=', $request->post('id'))->delete();
+                                foreach ($state as $key => $value) {
+                                    //  pr($district_id[$key]);
+                                    if (!empty($district_id[$key])) {
+                                        $dist_str = implode(",", $district_id[$key]);
+                                    } else {
+                                        $dist_str = '';
+                                    }
+
+                                    $participant_details = new UserMapping();
+                                    $participant_details->user_id = $user_details->id;
+                                    $participant_details->country_id = $country;
+                                    $participant_details->state_id = $value;
+                                    $participant_details->district_id = $dist_str;
+                                    $participant_details->is_deleted = 0;
+                                    $participant_details->created_by = $user->id;
+                                    $participant_details->created_at = date('Y-m-d H:i:s');
+                                    $result = $participant_details->save();
+                                }
+                            }
+
+                        }
+                    
+                    if ($result) {
+                        return true;
+                    }
+
+                });
+
+                // if ($result) {
+                //     return redirect('users')->with(['message' => 'User updated successfully.']);
+                // }
+                if ($result == 1) {
+                    return redirect('users')->with(['message' => 'User updated successfully.']);
+                }
+
+            } catch (\Exception$e) {
+                prd($e->getMessage());
+                return redirect()->back()->withErrors(['error' => $e->getMessage()])->withInput();
+            }
+        }
+
+        return view($view);
+    }
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\Users  $users
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(User $user)
+    {
+        //prd($user);
+        try {
+            if ($user->id != '') {
+                $user_details = User::find($user->id);
+                $user_details->is_deleted = 1;
+                $user_details->save();
+                UserMapping::where('user_id', '=', $user->id)->delete();
+                $data['message'] = 'User Deleted Successfully';
+                echo json_encode($data);
+            } else {
+                $data['message'] = 'Invalid Request';
+                echo json_encode($data);
+            }
+        }
+        catch (\Exception $e) {
+            print_r($e->getMessage());
+        }
+    }
+
+    public function export(Request $request)
+    {
+       return Excel::download(new DartTeam(), 'DartTeam_'.pdf_date().'.xlsx');
+    }
+    public function export_usersPdf()
+    {
+
+        $session_data = Session::get('user_filter_session');
+        $query = "SELECT a.*
+        from
+        users a
+        WHERE
+        is_deleted  = 0";
+        if (!empty($session_data['Search'])) {
+            if (!empty($session_data['user_type'])) {
+                if ($session_data['user_type']!='') {
+                    $query .= " AND a.u_type  = '" . $session_data['user_type']. "'";
+                }
+            }
+        }
+        $data = DB::select($query);
+        view()->share('data', $data);
+        $pdf_doc = PDF::loadView('pdf.usersPdf', $data)->setPaper('a3', 'landscape');
+
+        return $pdf_doc->download('Users_PDF'.pdf_date().'.pdf');
+    }
+    public function get_agency_demography(Request $request)
+    {
+        if (request()->ajax()) {
+            if ($request->get('agency_id') != '') {
+                $agency_id = $request->get('agency_id');
+                DB::enableQueryLog();
+                $federation_list = DB::table('agency as a')
+                    ->join('countries as s', 's.id', '=', 'a.country')
+                    ->join('states as b', 'b.id', '=', 'a.state')
+                    ->leftjoin('district as c', 'c.id', '=', 'a.district')
+                    ->where('a.is_deleted', '=', 0)
+                    ->where('a.agency_id', '=', $agency_id)
+                    ->select('c.name as name_of_district', 'b.name as name_of_state', 's.name as name_of_country', 'b.id as state_id', 'c.id as district_id', 's.id as country_id')
+                    ->get()->toArray();
+                $aa=DB::getQueryLog();
+                $state_id = $federation_list[0]->state_id;
+                //prd( $state_id);
+                if (!empty($federation_list)) {
+                    $res['country_option']="<option value='".$federation_list[0]->country_id."'>".$federation_list[0]->name_of_country."</option>";
+                    $res['state_option']="<option value='".$federation_list[0]->state_id."'>".$federation_list[0]->name_of_state."</option>";
+
+                    // $res['district_option']="<option value='".$federation_list[0]->district_id."'>".$federation_list[0]->name_of_district."</option>";
+
+
+                    $district_list = DB::table('district as a')
+                    ->where('a.is_deleted', '=', 0)
+                    ->where('a.state_id', '=', $state_id)
+                    ->select('a.id', 'a.name')
+                    ->orderBy('a.name')
+                    ->get()->toArray();
+
+                    $res['district_option'] = '';
+                    foreach ($district_list as $district) {
+                        // prd($district_list);
+                        $select = '';
+                        if (!empty($federation_list[0]->district_id)) {
+                            if ($federation_list[0]->district_id == $district->id) {
+                                $select='Selected';
+                            }
+                        } else {
+                            $select='';
+                        }
+                        $res['district_option'].= '<option value="'. $district->id .'" '.$select.' >'. $district->name.'</option>';
+                    }
+
+
+                    return Response::json($res);
+                }
+            }
+        }
+        return Response::json([]);
+    }
+}

@@ -1,0 +1,1337 @@
+<?php
+
+namespace App\Http\Controllers\API\v1;
+
+use App\Http\Controllers\API\v1\DataSyncClusController;
+use App\Http\Controllers\API\v1\DataSyncController;
+use App\Http\Controllers\API\v1\DataSyncfedController;
+use App\Http\Controllers\API\v1\DataSyncshgController;
+use App\Http\Controllers\API\v1\SqlLibController;
+use App\Http\Controllers\Controller as Controller;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+
+class UserController extends Controller
+{
+
+    public function __construct()
+    {
+
+    }
+
+    public function authuser($params)
+    {
+
+        $mst_users = DB::table('users')
+            ->where('email', $params['email'])
+            ->where('u_type', '=', 'F')
+            ->where('status', '=', 'A')
+            // ->where('device',$params['device'])
+            ->where('is_deleted', '=', 0)
+            ->get()->toArray();
+
+        if (!empty($mst_users)) {
+
+                if (!empty($params['otp'])) {
+                    $hashed = Hash::make($params['password']);
+                    if (Hash::check($params['password'], $mst_users[0]->password) && $params['otp'] == $mst_users[0]->otp) {
+                        $time = date_default_timezone_set("Asia/Kolkata");
+                        $action = 1;
+                        $user_id = $mst_users[0]->id;
+                        $u_type = $mst_users[0]->u_type;
+                        $time = date('H:i a');
+                        $user_ip = 1234567890;
+                        // $user_ip = $params['host'];
+                        logindetails($user_id, $action, $u_type, $user_ip, $time);
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                } else {
+                    $hashed = Hash::make($params['password']);
+                    if (Hash::check($params['password'], $mst_users[0]->password)) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }
+
+        }
+        else{
+            return 2;
+        }
+
+    }
+
+    // public function device_registration(Request $request)
+    // {
+    //     // prd($request->all());
+    //     if ($request->isMethod('post')) {
+    //         try
+    //         {
+    //             $email = $request->post('email');
+    //             $password = $request->post('pwd');
+    //             $device = $request->post('device');
+
+    //             $mst_users = DB::table('users')
+    //             ->where('email', $email)
+    //             ->where('is_deleted', '=', 0)
+    //             ->get()->toArray();
+
+    //         if (!empty($mst_users)) {
+
+    //             $hashed = Hash::make($password);
+    //             if (Hash::check($password, $mst_users[0]->password)) {
+    //                 $device_user = DB::table('users')
+    //                 ->where('device', $device)
+    //                 ->where('is_deleted', '=', 0)
+    //                 ->get()->toArray();
+    //                if(empty($device_user)){
+    //                 $user_details = User::find($mst_users[0]->id);
+    //                 $user_details->device = $device;
+    //                 $result = $user_details->save();
+
+    //                 if($result){
+
+    //                     echo json_encode(array('status' => 1));
+    //                    }
+    //                    else{
+    //                     echo json_encode(array('status' => 3));
+    //                    }
+    //                }
+    //                else{
+    //                 echo json_encode(array('status' => 2));
+    //                }
+
+    //             } else {
+
+    //                 echo json_encode(array('status' => 0));
+    //             }
+    //         }
+    //         else{
+    //             echo json_encode(array('status' => 0));
+    //         }
+
+    //         } catch (\Exception$e) {
+    //             die($e->getMessage());
+    //             throw new HttpException(500, $e->getMessage());
+    //         }
+    //     } else {
+    //         return $this->sendError('Invalid data request.');
+    //     }
+
+
+    // }
+
+    public function remove_element_by_key($arr)
+    {
+        $return = array();
+        foreach ($arr as $k => $v) {
+            if (is_array($v)) {
+                $return[$k] = $this->remove_element_by_key($v); //recursion
+                continue;
+            }
+            if (($k == 'created_at') || ($k == 'created_by') || ($k == 'updated_at') || ($k == 'updated_by') || ($k == 'is_deleted') || ($k == 'verified_by') || ($k == 'income_guid') ) {
+                continue;
+            }
+            // if (($k == 'created_at') || ($k == 'created_by') || ($k == 'updated_at') || ($k == 'updated_by') || ($k == 'is_deleted') || ($k == 'country_id') || ($k == 'state_id') || ($k == 'district_id') || ($k == 'web_email') || ($k == 'web_mobile') || ($k == 'analysis_rating') || ($k == 'fp_gender_c') || ($k == 'fp_caste_c') || ($k == 'fp_country_id') || ($k == 'fp_state_id') || ($k == 'fp_district_id') || ($k == 'verified_by') || ($k == 'block') || ($k == 'contact_name')) {
+            //     continue;
+            // }
+
+            $return[$k] = $v;
+        }
+        return $return;
+    }
+
+    public function sendResponse($result, $message)
+    {
+        $response = [
+            'success' => true,
+            'data' => $result,
+            'message' => $message,
+        ];
+        $response = $this->remove_element_by_key($response);
+        return response()->json($response['data'], 200);
+    }
+
+    public function sendError($error, $code = 404)
+    {
+        $response = [
+            'success' => false,
+            'message' => $error,
+        ];
+        return response()->json($response['message'], $code);
+    }
+
+    // public function index(Request $request)
+    // {
+    //     $SqlLib = new SqlLibController();
+
+    //     $data = [];
+    //     if ($request->isMethod('post')) {
+    //         try
+    //         {
+    //             $args['email'] = $request->post('email');
+    //             $args['password'] = $request->post('pwd');
+    //             $args['otp'] = $request->post('otp');
+    //             $args['device'] = $request->post('device');
+    //             $otp = $args['otp'];
+    //             $email = $args['email'];
+    //             $device = DB::table('users')
+    //             ->where('email', $args['email'])
+    //             ->where('is_deleted', '=', 0)
+    //             ->get()->toArray();
+    //             if(!empty($device[0]->device)){
+    //                 if (!empty($otp)) {
+
+    //                     if ($this->authuser($args)) {
+    //                         $usersAre = DB::table('users')
+    //                             ->where('email', $args['email'])
+    //                             ->where('u_type', '=', 'F')
+    //                             ->where('status', '=', 'A')
+    //                             ->where('is_deleted', '=', 0)
+    //                             ->get()->toArray();
+
+    //                         if (!empty($usersAre)) {
+    //                             foreach ($usersAre as $user) {
+
+    //                                 $newAre = array();
+    //                                 $newAre['uin'] = $user->uin;
+    //                                 $newAre['agency'] = $SqlLib->AgencynameByid($user->agency_id);
+    //                                 $newAre['name'] = $user->name;
+    //                                 $newAre['gender'] = $user->gender;
+    //                                 $newAre['adress'] = $user->adress;
+    //                                 $newAre['city'] = $user->city;
+    //                                 $newAre['pincode'] = $user->pincode;
+    //                                 $newAre['email'] = $user->email;
+    //                                 $newAre['mobile'] = $user->mobile;
+    //                                 $newAre['created_at'] = $user->created_at;
+    //                             }
+    //                             $data['user'] = $newAre;
+    //                         }
+    //                             $query = "SELECT b.* from family_mst AS a
+    //                             INNER JOIN  task_assignment AS b
+    //                             ON a.id = b.assignment_id
+    //                             WHERE b.status IN('P','PR')
+    //                             AND  b.assignment_type = 'FM' AND a.is_deleted = 0  AND b.user_id=$user->id
+    //                             UNION
+    //                             SELECT b.* from shg_mst AS a
+    //                             INNER JOIN  task_assignment AS b
+    //                             ON a.id = b.assignment_id
+    //                             WHERE b.status IN('P','PR')
+    //                             AND  b.assignment_type = 'SH' AND a.is_deleted = 0  AND b.user_id=$user->id
+    //                             UNION
+    //                             SELECT b.* from cluster_mst AS a
+    //                             INNER JOIN  task_assignment AS b
+    //                             ON a.id = b.assignment_id
+    //                             WHERE b.status IN('P','PR')
+    //                             AND  b.assignment_type = 'CL' AND a.is_deleted = 0  AND b.user_id=$user->id
+    //                             UNION
+    //                             SELECT b.* from federation_mst AS a
+    //                             INNER JOIN  task_assignment AS b
+    //                             ON a.id = b.assignment_id
+    //                             WHERE b.status IN('P','PR')
+    //                             AND  b.assignment_type = 'FD' AND a.is_deleted = 0  AND b.user_id=$user->id";
+    //                             $taskagnAre = DB::select($query);
+    //                             // $query = "Select * from task_assignment where status IN('P','PR') and user_id=" . $user->id;
+    //                             // $taskagnAre = DB::select($query);
+
+    //                         if (!empty($taskagnAre)) {
+    //                             $taskType = array('A' => 'Analytics', 'R' => 'Ratings');
+    //                             $AnstType = array('FD' => 'Federation', 'FM' => 'Family', 'SH' => 'Shg', 'CL' => 'Cluster');
+    //                             // $AnstType = array( 'FD' => 'Federation');
+
+
+    //                             foreach ($taskagnAre as $task) {
+    //                                 if (array_key_exists($task->assignment_type, $AnstType)) {
+    //                                     $analiticsType = $AnstType[$task->assignment_type];
+    //                                     $mst_id = $task->assignment_id;
+    //                                     $taskFor = $taskType[$task->task];
+    //                                     $task_a1_a2 = $task->task_a1;
+    //                                     $status = $task->status;
+
+    //                                     $newAre = $this->$analiticsType($task->assignment_id, $task->asgtkn, $task_a1_a2, $status,$mst_id);
+
+    //                                     $data[$analiticsType][$taskFor][] = $newAre;
+
+
+
+    //                                 }
+    //                             }
+
+    //                             // prd("kkk");
+    //                             // prd($data['language']);
+    //                         }
+
+    //                         return $this->sendResponse($data, 'Data retrieved successfully.');
+    //                     } else {
+    //                         return $this->sendError('Unauthorized Access.');
+    //                     }
+    //                 } else {
+    //                     $users = DB::table('users')
+    //                         ->where('email', $email)
+    //                         ->where('is_deleted', '=', 0)
+    //                         ->get()->toArray();
+    //                     $data = [];
+    //                     $data['name'] = $users[0]->name;
+
+    //                     if ($this->authuser($args)) {
+    //                         $device = $this->authuser($args);
+    //                         // prd($device);
+    //                         if($device == 1){
+    //                             $OTP = 123456;
+    //                             $data['otp'] = $OTP;
+    //                             // send_otp($email, $data);
+    //                             // $OTP = 123456;
+    //                             User::where('id', '=', $users[0]->id)->update(['otp' => $OTP]);
+    //                             echo json_encode(array('status' => 1));
+    //                         }elseif($device == 2){
+    //                             echo json_encode(array('status' => 2));
+    //                         }
+
+    //                     } else {
+    //                         echo json_encode(array('status' => 0));
+    //                     }
+
+    //                 }
+    //             }else
+    //             {
+    //                 echo json_encode(array('status' => 3));
+    //             }
+
+
+    //         } catch (\Exception$e) {
+    //             die($e->getMessage());
+    //             throw new HttpException(500, $e->getMessage());
+    //         }
+    //     } else {
+    //         return $this->sendError('Invalid data request.');
+    //     }
+    // }
+    public function index(Request $request)
+    {
+        // prd($request->all());
+        $SqlLib = new SqlLibController();
+
+        $data = [];
+        if ($request->isMethod('post')) {
+            try
+            {
+                $args['email'] = $request->post('email');
+                $args['password'] = $request->post('pwd');
+                $args['otp'] = $request->post('otp');
+                $otp = $args['otp'];
+                $email = $args['email'];
+                if (!empty($otp)) {
+                    if ($this->authuser($args)) {
+                        $usersAre = DB::table('users')
+                            ->where('email', $args['email'])
+                            ->where('u_type', '=', 'F')
+                            ->where('status', '=', 'A')
+                            ->where('is_deleted', '=', 0)
+                            ->get()->toArray();
+
+                        if (!empty($usersAre)) {
+                            foreach ($usersAre as $user) {
+
+                                $newAre = array();
+                                $newAre['uin'] = $user->uin;
+                                $newAre['agency'] = $SqlLib->AgencynameByid($user->agency_id);
+                                $newAre['name'] = $user->name;
+                                $newAre['user_id'] = $user->id;
+                                $newAre['gender'] = $user->gender;
+                                $newAre['adress'] = $user->adress;
+                                $newAre['city'] = $user->city;
+                                $newAre['pincode'] = $user->pincode;
+                                $newAre['email'] = $user->email;
+                                $newAre['mobile'] = $user->mobile;
+                                $newAre['created_at'] = $user->created_at;
+                            }
+                            $data['user'] = $newAre;
+                        }
+                        $query = "SELECT b.* from family_mst AS a
+                                INNER JOIN  task_assignment AS b
+                                ON a.id = b.assignment_id
+                                WHERE b.status IN('P','PR')
+                                AND  b.assignment_type = 'FM' AND a.is_deleted = 0  AND b.user_id=$user->id
+                                UNION
+                                SELECT b.* from shg_mst AS a
+                                INNER JOIN  task_assignment AS b
+                                ON a.id = b.assignment_id
+                                WHERE b.status IN('P','PR')
+                                AND  b.assignment_type = 'SH' AND a.is_deleted = 0  AND b.user_id=$user->id
+                                UNION
+                                SELECT b.* from cluster_mst AS a
+                                INNER JOIN  task_assignment AS b
+                                ON a.id = b.assignment_id
+                                WHERE b.status IN('P','PR')
+                                AND  b.assignment_type = 'CL' AND a.is_deleted = 0  AND b.user_id=$user->id
+                                UNION
+                                SELECT b.* from federation_mst AS a
+                                INNER JOIN  task_assignment AS b
+                                ON a.id = b.assignment_id
+                                WHERE b.status IN('P','PR')
+                                AND  b.assignment_type = 'FD' AND a.is_deleted = 0  AND b.user_id=$user->id";
+                                $taskagnAre = DB::select($query);
+                        // $query = "Select * from task_assignment where status IN('P','PR') and user_id=" . $user->id;
+                        //         $taskagnAre = DB::select($query);
+                        if (!empty($taskagnAre)) {
+                            $taskType = array('A' => 'Analytics', 'R' => 'Ratings');
+                            $AnstType = array('FD' => 'Federation', 'FM' => 'Family', 'SH' => 'Shg', 'CL' => 'Cluster');
+
+                            foreach ($taskagnAre as $task) {
+                                if (array_key_exists($task->assignment_type, $AnstType)) {
+                                    $analiticsType = $AnstType[$task->assignment_type];
+                                    $mst_id = $task->assignment_id;
+                                    $taskFor = $taskType[$task->task];
+                                    $task_a1_a2 = $task->task_a1;
+                                    $status = $task->status;
+
+                                    $newAre = $this->$analiticsType($task->assignment_id, $task->asgtkn, $task_a1_a2, $status,$mst_id);
+
+                                    $data[$analiticsType][$taskFor][] = $newAre;
+
+                                }
+                            }
+                        }
+
+                        return $this->sendResponse($data, 'Data retrieved successfully.');
+                    } else {
+                        return $this->sendError('Unauthorized Access.');
+                    }
+                } else {
+                    $users = DB::table('users')
+                        ->where('email', $email)
+                        ->where('u_type', '=', 'F')
+                        ->where('status', '=', 'A')
+                        ->where('is_deleted', '=', 0)
+                        ->get()->toArray();
+                    $data = [];
+                    $data['name'] = $users[0]->name;
+                    // prd($users);
+
+                    if ($this->authuser($args)) {
+                        $OTP = rand(100000, 999999);
+                        $data['otp'] = $OTP;
+                        // send_otp($email, $data);
+                        $OTP = 123456;
+                        User::where('id', '=', $users[0]->id)->update(['otp' => $OTP]);
+                        echo json_encode(array('status' => 1));
+                    } else {
+                        echo json_encode(array('status' => 0));
+                    }
+
+                }
+
+            } catch (\Exception$e) {
+                die($e->getMessage());
+                throw new HttpException(500, $e->getMessage());
+            }
+        } else {
+
+            return $this->sendError('Invalid data request.');
+        }
+    }
+
+    public function download_master()
+    {
+
+        prd("hello");
+        $model = array();
+        $model['mst_language'] = DB::table('mst_language')
+        ->where('is_deleted', 0)
+        ->get()->toArray();
+
+        $model['mst_module'] = DB::table('mst_module')
+        ->where('is_deleted', 0)
+        ->get()->toArray();
+
+        $model['mst_section'] = DB::table('mst_section')
+        ->where('is_deleted', 0)
+        ->get()->toArray();
+
+        $model['mst_sub_section'] = DB::table('mst_sub_section')
+        ->where('is_deleted', 0)
+        ->get()->toArray();
+
+        $model['mst_app_label'] = DB::table('mst_app_label')
+        ->where('is_deleted', 0)
+        ->get()->toArray();
+
+
+
+        $model['mst_app_label_language'] = DB::table('mst_app_label_language')
+        ->where('is_deleted', 0)
+        ->get()->toArray();
+
+        // return $model;
+        return response()->json($model);
+    }
+
+    public function Federation($mst_id, $assignedid, $task_a1_a2, $status)
+    {
+        //--------------------
+        $model = array();
+        //return $model;
+        //--------------------
+
+        if ($status == 'PR') {
+            $DataSyncfed = new DataSyncfedController();
+            $model = $DataSyncfed->FederationFeed($assignedid, $mst_id, $task_a1_a2);
+            return $model;
+        }
+
+        $subMstAre = DB::table('federation_sub_mst')
+            ->where('federation_mst_id', $mst_id)
+            ->where('status', 'A')
+            ->get()->toArray();
+        $subMstAre = (array) ($subMstAre);
+        $sub_mst_id = !empty($subMstAre[0]->id) > 0 ? $subMstAre[0]->id : null;
+
+        $tables = array(
+            'federation_analysis',
+            'federation_credithistory',
+            'federation_efficiency',
+            'federation_inclusion',
+            'federation_profile',
+            'federation_rating',
+            'federation_risk_mitigation',
+            'federation_sustainability',
+            'federation_governance',
+            'federation_observation',
+        );
+
+        $model = array();
+
+        foreach ($tables as $val) {
+
+            $Are = $val . '_Are';
+            $Are = array();
+
+            if ($val == 'federation_profile') {
+                $mstAre = DB::table('federation_mst')
+                    ->where('id', $mst_id)
+                    ->get()->toArray();
+                $SqlLib = new SqlLibController();
+                foreach ($mstAre as $val1) {
+                    $val1 = (array) $val1;
+                    $Are['uin'] = $val1['uin'];
+                    $Are['agency'] = $SqlLib->AgencynameByid($val1['agency_id']);
+                }
+                $query="SELECT remark,created_at FROM task_assignment where asgtkn = '$assignedid' ";
+                $remarks = DB::select($query);
+                $Are['assignID'] = $assignedid; // Assigned ID
+
+                $Are['remarks'] = $remarks[0]->remark;
+
+                // $Are['created'] = $remarks[0]->created_at;
+            }
+
+            $tableField = $this->tableField($val);
+            $analytics_data = DB::table($val)
+                ->where('federation_sub_mst_id', $sub_mst_id)
+                ->get()->toArray();
+            $analytics_data = (array) $analytics_data;
+            if (!empty($analytics_data)) {
+                $analytics_data = $analytics_data[0];
+            }
+
+            $analytics_data = (array) $analytics_data;
+            $typeAreObj = array('Federation_Commit_Governance_Training_object',
+                'Federation_SAC_Governance_Training_object',
+                'Federation_BOOK_Governance_Training_object',
+                'Federation_Bank_ac',
+                'Federation_Sustainability_Service');
+
+            if ('federation_rating' == $val) {
+                if (!empty($tableField) > 0) {
+                    foreach ($tableField as $ftval) {
+
+                        if (count($analytics_data) > 0) {
+                            $Are[$ftval] = json_decode($analytics_data[$ftval], true);
+                        } else {
+                            $Are[$ftval] = json_decode('', true);
+                        }
+
+                    }
+                }
+            } else {
+                if (!empty($tableField) > 0) {
+                    foreach ($tableField as $ftval) {
+                        if (in_array($ftval, $typeAreObj)) {
+                            $obj1 = array();
+                            if (count($analytics_data) > 0) {
+                                $obj2 = json_decode($analytics_data[$ftval], true);
+                                $obj2 = json_decode(stripslashes($analytics_data[$ftval]), true);
+                            } else {
+                                $obj2 = json_decode('', true);
+                            }
+                            if (!empty($obj2)) {
+                                foreach ($obj2 as $objKey => $objVal) {
+                                    $obj1[$objKey] = $objVal;
+                                }
+                            }
+
+                            $Are[$ftval] = $obj1;
+
+                        } else {
+
+                            if (!empty($analytics_data)) {
+
+                                if (count($analytics_data) > 0) {
+                                    $Are[$ftval] = $analytics_data[$ftval];
+                                }
+                            } else {
+                                $Are[$ftval] = array();
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            $model[$val] = $Are;
+        }
+
+        //chalenges______
+        $chalenges_data = DB::table('federation_challenges')
+            ->where('federation_sub_mst_id', $sub_mst_id)
+            ->get()->toArray();
+        $fdrchAre = array();
+        foreach ($chalenges_data as $fchval) {
+            $obj = array();
+            $fchval = (array) $fchval;
+            if ($fchval['challenge']) {
+                $obj['challenge'] = $fchval['challenge'];
+            }
+
+            $actAre = json_decode($fchval['action'], true);
+            if (!empty($actAre) > 0) {
+                $actionAre = array();
+                foreach ($actAre as $actKey => $actVal) {
+                    $actionAre[$actKey] = $actVal;
+                }
+                $obj['action'] = $actionAre;
+            }
+
+            if (!empty($obj) > 0) {
+                $fdrchAre[] = $obj;
+            }
+        }
+
+        $model['federation_challenges'] = $fdrchAre;
+
+        $image_data = DB::table('federation_upload_photos_videos')
+            ->select(DB::Raw('case when (imagename is not null and imagename!="") then concat("' . url("/") . '","/assets/uploads/",imagename) else "" end as imagename'))
+            ->where('federation_sub_mst_id', '=', $sub_mst_id)
+            ->get()->toArray();
+        $img_data = array();
+        foreach ($image_data as $fchval) {
+            $obj = array();
+            $fchval = (array) $fchval;
+            if ($fchval['imagename']) {
+                $obj['imagename'] = $fchval['imagename'];
+            }
+
+            if (!empty($obj) > 0) {
+                $img_data[] = $obj;
+            }
+        }
+        $model['image_data'] = $img_data;
+
+        return $model;
+
+    }
+
+    public function Cluster($mst_id, $assignedid, $task_a1_a2, $status)
+    {
+
+        //--------------------
+        $model = array();
+        //return $model;
+        //--------------------
+
+        if ($status == 'PR') {
+
+            $DataSyncClus = new DataSyncClusController();
+            $model = $DataSyncClus->ClusterFeed($assignedid, $mst_id, $task_a1_a2);
+            return $model;
+        }
+
+        $subMstAre = DB::table('cluster_sub_mst')
+            ->where('cluster_mst_id', $mst_id)
+            ->where('status', 'A')
+            ->get()->toArray();
+        // prd($mst_id);
+        $sub_mst_id = !empty($subMstAre[0]->id) > 0 ? $subMstAre[0]->id : null;
+
+        $tables = array(
+            'cluster_profile',
+            'cluster_analysis',
+            'cluster_creditrecovery',
+            'cluster_efficiency',
+            'cluster_inclusion',
+            'cluster_rating',
+            'cluster_saving',
+            'cluster_governance',
+            'cluster_observation');
+
+        $model = array();
+
+        foreach ($tables as $val) {
+
+            $Are = $val . '_Are';
+            $Are = array();
+
+            if ($val == 'cluster_profile') {
+                $mstAre = DB::table('cluster_mst')
+                    ->where('id', $mst_id)
+                    ->get()->toArray();
+                $SqlLib = new SqlLibController();
+                foreach ($mstAre as $val1) {
+                    $val1 = (array) $val1;
+                    $Are['uin'] = $val1['uin'];
+                    $Are['agency'] = $SqlLib->AgencynameByid($val1['agency_id']);
+                }
+                $query="SELECT remark,created_at FROM task_assignment where asgtkn = '$assignedid' ";
+                $remarks = DB::select($query);
+                $Are['assignID'] = $assignedid; // Assigned ID
+
+                $Are['remarks'] = $remarks[0]->remark;
+
+                // $Are['created'] = $remarks[0]->created_at;
+                $parent = $SqlLib->Clusterparent($mst_id); //added*////in do line ka ni pata kya krna h
+                $Are['name_of_federation'] = $parent['federation']; //added*
+            }
+
+            $tableField = $this->tableField($val);
+            $analytics_data = DB::table($val)
+                ->where('cluster_sub_mst_id', $sub_mst_id)
+                ->get()->toArray();
+            $analytics_data = (array) $analytics_data;
+            if (count($analytics_data) > 0) {
+                $analytics_data = $analytics_data[0];
+            }
+            $analytics_data = (array) $analytics_data;
+            $typeAreObj = array('Cluster_Subcommittee_object',
+                'Cluster_Commit_Efficiency_Training_object',
+                'Cluster_SAC_Efficiency_Training_object');
+
+            if ('cluster_rating' == $val) {
+                if (!empty($tableField) > 0) {
+                    foreach ($tableField as $ftval) {
+
+                        if (count($analytics_data) > 0) {
+                            $Are[$ftval] = json_decode($analytics_data[$ftval], true);
+                        } else {
+                            $Are[$ftval] = json_decode('', true);
+                        }
+
+                    }
+                }
+            } else {
+                if (!empty($tableField) > 0) {
+                    foreach ($tableField as $ftval) {
+                        if (in_array($ftval, $typeAreObj)) {
+                            $obj1 = array();
+
+                            if (count($analytics_data) > 0) {
+                                $obj2 = json_decode(stripslashes($analytics_data[$ftval]), true);
+                            } else {
+                                $obj2 = json_decode('', true);
+                            }
+                            if (!empty($obj2)) {
+                                foreach ($obj2 as $objKey => $objVal) {
+                                    $obj1[$objKey] = $objVal;
+                                }
+                            }
+
+                            $Are[$ftval] = $obj1;
+
+                        } else {
+
+                            if (!empty($analytics_data)) {
+
+                                if (count($analytics_data) > 0) {
+                                    $Are[$ftval] = $analytics_data[$ftval];
+                                }
+                            } else {
+                                $Are[$ftval] = array();
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            $model[$val] = $Are;
+        }
+        // chalenges______
+        $chalenges_data = DB::table('cluster_challenges')
+            ->where('cluster_sub_mst_id', $sub_mst_id)
+            ->get()->toArray();
+        $fdrchAre = array();
+        foreach ($chalenges_data as $fchval) {
+            $obj = array();
+            $fchval = (array) $fchval;
+            if ($fchval['challenge']) {
+                $obj['challenge'] = $fchval['challenge'];
+            }
+            $actAre = json_decode($fchval['action'], true);
+            $actAre = (array) $actAre;
+            if (!empty($actAre) > 0) {
+                $actionAre = array();
+                foreach ($actAre as $actKey => $actVal) {
+                    $actionAre[$actKey] = $actVal;
+                }
+                $obj['action'] = $actionAre;
+            }
+            if (!empty($obj) > 0) {
+                $fdrchAre[] = $obj;
+            }
+        }
+
+        $model['cluster_challenges'] = $fdrchAre;
+
+        $image_data = DB::table('cluster_upload_photos_videos')
+            ->select(DB::Raw('case when (imagename is not null and imagename!="") then concat("' . url("/") . '","/assets/uploads/",imagename) else "" end as imagename'))
+            ->where('cluster_sub_mst_id', '=', $sub_mst_id)
+            ->get()->toArray();
+        $img_data = array();
+        foreach ($image_data as $fchval) {
+            $obj = array();
+            $fchval = (array) $fchval;
+            if ($fchval['imagename']) {
+                $obj['imagename'] = $fchval['imagename'];
+            }
+
+            if (!empty($obj) > 0) {
+                $img_data[] = $obj;
+            }
+        }
+        $model['image_data'] = $img_data;
+        // prd("lk");
+        return $model;
+    }
+
+    public function Shg($mst_id, $assignedid, $task_a1_a2, $status)
+    {
+
+        //--------------------
+        $model = array();
+        //return $model;
+        //--------------------
+
+        if ($status == 'PR') {
+            $DataSyncshg = new DataSyncshgController();
+            $model = $DataSyncshg->ShgFeed($assignedid, $mst_id, $task_a1_a2);
+            return $model;
+        }
+
+        $subMstAre = DB::table('shg_sub_mst')
+            ->where('shg_mst_id', $mst_id)
+            ->where('status', 'A')
+            ->get()->toArray();
+        $sub_mst_id = $subMstAre[0]->id;
+
+        $tables = array(
+            'shg_profile',
+            'shg_analysis',
+            'shg_creditrecovery',
+            'shg_inclusion',
+            'shg_rating',
+            'shg_saving',
+            'shg_efficiency',
+            'shg_governance',
+            'shg_observation');
+
+        $model = array();
+
+        foreach ($tables as $val) {
+
+            $Are = $val . '_Are';
+            $Are = array();
+
+            if ($val == 'shg_profile') {
+                $mstAre = DB::table('shg_mst')
+                    ->where('id', $mst_id)
+                    ->get()->toArray();
+                $SqlLib = new SqlLibController();
+
+                foreach ($mstAre as $val1) {
+                    $val1 = (array) $val1;
+                    $Are['uin'] = $val1['uin'];
+                    $Are['agency'] = $SqlLib->AgencynameByid($val1['agency_id']);
+                }
+                $query="SELECT remark,created_at FROM task_assignment where asgtkn = '$assignedid' ";
+                $remarks = DB::select($query);
+
+                $Are['remarks'] = $remarks[0]->remark;
+
+                // $Are['created'] = $remarks[0]->created_at;
+                $Are['assignID'] = $assignedid; // Assigned ID
+
+
+                $parent = $SqlLib->Shgparent($mst_id); //added* //is line ka ni pata
+
+                $Are['clusterName'] = $parent['cluster']; //added*
+                $Are['federationName'] = $parent['federation']; //added*
+            }
+
+            $tableField = $this->tableField($val);
+            $analytics_data = DB::table($val)
+                ->where('shg_sub_mst_id', $sub_mst_id)
+                ->get()->toArray();
+
+            if (count($analytics_data) > 0) {
+                $analytics_data = $analytics_data[0];
+            }
+            $analytics_data = (array) $analytics_data;
+            $typeAreObj = array('SHG_Efficiency_Training_object');
+
+            if ('shg_rating' == $val) {
+                if (!empty($tableField) > 0) {
+                    foreach ($tableField as $ftval) {
+
+                        if (count($analytics_data) > 0) {
+                            $Are[$ftval] = json_decode($analytics_data[$ftval], true);
+                        } else {
+                            $Are[$ftval] = json_decode('', true);
+                        }
+
+                    }
+                }
+            } else {
+                if (!empty($tableField) > 0) {
+                    foreach ($tableField as $ftval) {
+                        if (in_array($ftval, $typeAreObj)) {
+                            $obj1 = array();
+
+                            if (count($analytics_data) > 0) {
+                                // $obj2 = json_decode($analytics_data[$ftval], true);
+                                   $obj2 = json_decode(stripslashes($analytics_data[$ftval]), true);
+                            } else {
+                                $obj2 = json_decode('', true);
+                            }
+                            if (!empty($obj2)) {
+                                foreach ($obj2 as $objKey => $objVal) {
+                                    $obj1[$objKey] = $objVal;
+                                }
+                            }
+
+                            $Are[$ftval] = $obj1;
+
+                        } else {
+
+                            if (!empty($analytics_data)) {
+
+                                if (count($analytics_data) > 0) {
+                                    $Are[$ftval] = $analytics_data[$ftval];
+                                }
+                            } else {
+                                $Are[$ftval] = array();
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            $model[$val] = $Are;
+        }
+
+        //chalenges______
+        $chalenges_data = DB::table('shg_challenges')
+            ->where('shg_sub_mst_id', $sub_mst_id)
+            ->get()->toArray();
+        $fdrchAre = array();
+        foreach ($chalenges_data as $fchval) {
+            $obj = array();
+            $fchval = (array) $fchval;
+            if ($fchval['challenge']) {
+                $obj['challenge'] = $fchval['challenge'];
+            }
+            $actAre = json_decode($fchval['action'], true);
+            if (!empty($actAre)) {
+                $actionAre = array();
+                foreach ($actAre as $actKey => $actVal) {
+                    $actionAre[$actKey] = $actVal;
+                }
+                $obj['action'] = $actionAre;
+            }
+            if (!empty($obj)) {
+                $fdrchAre[] = $obj;
+            }
+        }
+
+        $model['shg_challenges'] = $fdrchAre;
+        $image_data = DB::table('shg_upload_photos_videos')
+            ->select(DB::Raw('case when (imagename is not null and imagename!="") then concat("' . url("/") . '","/assets/uploads/",imagename) else "" end as imagename'))
+            ->where('shg_sub_mst_id', '=', $sub_mst_id)
+            ->get()->toArray();
+
+        $img_data = array();
+        foreach ($image_data as $fchval) {
+            $obj = array();
+            $fchval = (array) $fchval;
+            if ($fchval['imagename']) {
+                $obj['imagename'] = $fchval['imagename'];
+            }
+
+            if (!empty($obj) > 0) {
+                $img_data[] = $obj;
+            }
+        }
+        $model['image_data'] = $img_data;
+        return $model;
+    }
+
+    public function Family($mst_id = 0, $assignedid = 0, $task_a1_a2 = 0, $status = 0)
+    {
+
+        if ($status == 'PR') { //
+            $DataSync = new DataSyncController();
+            $model = $DataSync->FamilyFeed($assignedid, $mst_id, $task_a1_a2);
+        } else { //
+            $model['first_part'] = $this->FamilyPart1($mst_id, $assignedid, $task_a1_a2);
+            $model['second_part'] = $this->FamilyPart2($mst_id);
+        }
+
+        return $model;
+    }
+
+    public function FamilyPart1($mst_id, $assignedid, $task_a1_a2)
+    {
+        $subMstAre = DB::table('family_sub_mst')
+            ->where('family_mst_id', $mst_id)
+            ->where('status', 'A')
+            ->get()->toArray();
+
+        $sub_mst_id = $subMstAre[0]->id;
+
+        $tables = array(
+            'family_profile',
+            'family_income_this_year',
+            'family_observation_this_year',
+            'family_savings',
+            'family_assets',
+            'family_rating',
+            'family_concent');
+
+        $remove_key = array('id' => '', 'family_sub_mst_id' => '');
+        $model = array();
+
+        foreach ($tables as $val) {
+            $Are = $val . '_Are';
+            $Are = array();
+            if ($val == 'family_profile') {
+                $mstAre = DB::table('family_mst')
+                    ->where('id', $mst_id)
+                    ->get()->toArray();
+                $SqlLib = new SqlLibController();
+                foreach ($mstAre as $val1) {
+                    $val1 = (array) $val1;
+                    $Are['uin'] = $val1['uin'];
+                    $Are['fp_uin'] = $val1['uin'];
+                    $Are['agency'] = $SqlLib->AgencynameByid($val1['agency_id']); //ye ni pata
+                }
+                $parent = $SqlLib->Familyparent($mst_id); //yeah ni pata
+                $Are['fp_shg_name'] = $parent['shg'];
+                $Are['fp_cluster_name'] = $parent['cluster'];
+                $Are['fp_federation'] = $parent['federation'];
+
+                $query="SELECT remark,created_at FROM task_assignment where asgtkn = '$assignedid' ";
+                $remarks = DB::select($query);
+
+                $Are['remarks'] = $remarks[0]->remark;
+
+                $Are['created'] = $remarks[0]->created_at;
+
+                $Are['assignID'] = $assignedid; // Assigned ID
+                // $Are['part'] = $task_a1_a2; // part1, part2
+                if($task_a1_a2 !='N/A'){
+                    $Are['part'] = $task_a1_a2;
+                }
+                else{
+                    $Are['part'] = 'P2';
+                }
+                $Are['family_id'] = $mst_id;
+                $Are['task_status'] = $subMstAre[0]->task_status;
+
+            }
+
+            $tableField = $this->tableField($val);
+
+            $analytics_data = DB::table($val)
+                ->where('family_sub_mst_id', $sub_mst_id)
+                ->get()->toArray();
+            if (count($analytics_data) > 0) {
+                $analytics_data = (array) $analytics_data[0];
+            }
+
+            if ('family_rating' == $val) {
+                foreach ($tableField as $ftval) {
+
+
+                    $Are[$ftval] = json_decode(stripslashes($analytics_data[$ftval]), true);
+                    // $Are[$ftval] = (array)($analytics_data[$ftval]);
+
+
+
+                }
+            } else {
+                foreach ($tableField as $ftval) {
+                    $Are[$ftval] = $analytics_data[$ftval];
+                }
+            }
+            $model[$val] = $Are;
+        }
+
+        $tblObj = array(
+            'family_goals',
+            'family_agriculture_production_this_year',
+            'family_loan_outstanding',
+            'family_other_income_this_year',
+            'family_gov_liveilhood_program',
+            'family_expenditure_this_year',
+            'family_member_information');
+
+        //multiple rows data
+        foreach ($tblObj as $val) {
+            $Are = $val . '_Are';
+            $Are = array();
+
+            $analytics_data1 = DB::table($val)
+                ->where('family_sub_mst_id', $sub_mst_id)
+                ->get()->toArray();
+            foreach ($analytics_data1 as $an1) {
+                $an1 = (array) $an1;
+                $Are[] = array_diff_key($an1, $remove_key);
+            }
+            $model[$val] = $Are;
+        }
+
+        $tableBojtable = array('family_assets' => array('family_assets_gadgets',
+            'family_assets_live_stock',
+            'family_assets_vehicle',
+            'family_assets_machinery'),
+            'family_savings' => array('family_savings_source',
+                'family_savings_source_other'),
+            'family_analysis_object' => array('family_analysis_this_year',
+                'family_analysis_next_year'),
+            'family_observation_this_year' => array('family_observation_this_year_member'));
+
+        //multiple rows data with under tables
+        foreach ($tableBojtable as $keys => $val1) {
+            $Are = $keys . '_Are';
+            $Are = array();
+
+            foreach ($val1 as $val2) {
+                $Are1 = $val2 . '_Are';
+                $Are1 = array();
+
+                $analytics_data2 = DB::table($val2)
+                    ->where('family_sub_mst_id', $sub_mst_id)
+                    ->get()->toArray();
+
+                if (!empty($analytics_data2)) {
+                    foreach ($analytics_data2 as $an2) {
+                        $an2 = (array) $an2;
+                        $Are1[] = array_diff_key($an2, $remove_key);
+                    }
+                }
+                $model[$keys][$val2] = $Are1;
+            }
+        }
+
+        //chalenges______
+        $chalenges_data = DB::table('family_challenges')
+            ->where('family_sub_mst_id', $sub_mst_id)
+            ->get()->toArray();
+        $fdrchAre = array();
+        foreach ($chalenges_data as $fchval) {
+            $obj = array();
+            $fchval = (array) $fchval;
+            if ($fchval['challenges']) {
+
+                $obj['challenge'] = $fchval['challenges'];
+            }
+            $actAre = json_decode($fchval['ch_actions'], true);
+            if (!empty($actAre) > 0) {
+                $actionAre = array();
+                foreach ($actAre as $actKey => $actVal) {
+                    $actionAre[$actKey] = $actVal;
+                }
+                $obj['action'] = $actionAre;
+            }
+            if (count($obj) > 0) {
+                $fdrchAre[] = $obj;
+            }
+        }
+        $image_data = DB::table('family_upload_photos_videos')
+            ->select(DB::Raw('case when (imagename is not null and imagename!="") then concat("' . url("/") . '","/assets/uploads/",imagename) else "" end as imagename'))
+            ->where('family_sub_mst_id', '=', $sub_mst_id)
+            ->get()->toArray();
+
+        $a = '';
+        $fac = url('/') . "/signature/fac_$sub_mst_id.png";
+        $par = url('/') . "/signature/par_$sub_mst_id.png";
+
+        $signature = array($a, $fac, $par);
+        $model['signature'] = $signature;
+
+        $img_data = array();
+        foreach ($image_data as $fchval) {
+            $obj = array();
+            $fchval = (array) $fchval;
+            if ($fchval['imagename']) {
+                $obj['imagename'] = $fchval['imagename'];
+            }
+
+            if (!empty($obj) > 0) {
+                $img_data[] = $obj;
+            }
+        }
+        $model['image_data'] = $img_data;
+
+        $model['family_challenges'] = $fdrchAre;
+        //_______________
+        // pr($model);
+
+        return $model;
+
+    }
+
+    public function FamilyPart2($mst_id)
+    {
+
+        $subMstAre = DB::table('family_sub_mst')
+            ->where('family_mst_id', $mst_id)
+            ->where('status', 'A')
+            ->get()->toArray();
+        $subMstAre[0] = (array) $subMstAre[0];
+        $sub_mst_id = $subMstAre[0]['id'];
+
+        $tables = array(
+            'family_shgmember_commitment',
+            'family_observation_next_year',
+            'family_income_next_year',
+            'family_business_investment_plan');
+
+        $remove_key = array('id' => '', 'family_sub_mst_id' => '');
+
+        $model = array();
+
+        foreach ($tables as $val) {
+            $Are = $val . '_Are';
+            $Are = array();
+            $tableField = $this->tableField($val);
+            $analytics_data = DB::table($val)
+                ->where('family_sub_mst_id', $sub_mst_id)
+                ->get()->toArray();
+            if (count($analytics_data) > 0) {
+                $analytics_data = (array) $analytics_data[0];
+            }
+
+            foreach ($tableField as $ftval) {
+                $Are[$ftval] = $analytics_data[$ftval];
+            }
+            $model[$val] = $Are;
+        }
+
+        $tblObj = array(
+            'family_agriculture_production_next_year',
+            'family_other_income_next_year',
+            'family_expenditure_next_year');
+
+        //multiple rows data
+        foreach ($tblObj as $val) {
+            $Are = $val . '_Are';
+            $Are = array();
+
+            $analytics_data1 = DB::table($val)
+                ->where('family_sub_mst_id', $sub_mst_id)
+                ->get()->toArray();
+            foreach ($analytics_data1 as $an1) {
+                $an1 = (array) $an1;
+                $Are[] = array_diff_key($an1, $remove_key);
+            }
+            $model[$val] = $Are;
+        }
+
+        $tableBojtable = array('family_business_investment_plan' => array('family_fixed_investment',
+            'family_yearly_operational_expenses',
+            'family_income_from_business',
+            'family_loan_repayment'));
+
+        //multiple rows data with under tables
+
+        foreach ($tableBojtable as $keys => $val1) {
+            $Are = $keys . '_Are';
+            $Are = array();
+
+            foreach ($val1 as $val2) {
+                $Are1 = $val2 . '_Are';
+                $Are1 = array();
+
+                $analytics_data2 = DB::table($val2)
+                    ->where('family_sub_mst_id', $sub_mst_id)
+                    ->get()->toArray();
+
+                if (!empty($analytics_data2)) {
+                    foreach ($analytics_data2 as $an2) {
+                        $an2 = (array) $an2;
+                        $Are1[] = array_diff_key($an2, $remove_key);
+                    }
+                }
+                $model[$keys][$val2] = $Are1;
+            }
+        }
+        $image_data = DB::table('family_image_nextyear')
+            ->select(DB::Raw('case when (imagename is not null and imagename!="") then concat("' . url("/") . '","/assets/uploads/",imagename) else "" end as imagename'))
+            ->where('family_sub_mst_id', '=', $sub_mst_id)
+            ->get()->toArray();
+        $img_data = array();
+        foreach ($image_data as $fchval) {
+            $obj = array();
+            $fchval = (array) $fchval;
+            if ($fchval['imagename']) {
+                $obj['imagename'] = $fchval['imagename'];
+            }
+
+            if (!empty($obj) > 0) {
+                $img_data[] = $obj;
+            }
+        }
+        $model['image_data'] = $img_data;
+        return $model;
+
+    }
+
+    public function tableField($table)
+    {
+
+        $profileField = array();
+
+        $exAre = array('id', 'family_sub_mst_id', 'shg_sub_mst_id', 'cluster_sub_mst_id', 'federation_sub_mst_id');
+        // if ($table == 'cluster_profile' || $table == 'shg_profile') {
+        //     $exAre = array('id', 'family_sub_mst_id', 'shg_sub_mst_id', 'cluster_sub_mst_id', 'federation_sub_mst_id', 'name_of_district', 'name_of_state', 'name_of_country');
+        // }
+        $qry = "select * from $table limit 1";
+        $profileColumn = DB::select($qry);
+        foreach ($profileColumn as $pcl) {
+            foreach ($pcl as $p => $ps) {
+                if (!in_array($p, $exAre)) {
+                    $profileField[$p] = $p;
+                }
+            }
+        }
+
+        return $profileField;
+    }
+
+}

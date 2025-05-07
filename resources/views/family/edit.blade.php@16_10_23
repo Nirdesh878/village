@@ -1,0 +1,326 @@
+@extends('layouts.app')
+
+@section('content')
+@php $user = \Illuminate\Support\Facades\Auth::user(); @endphp
+    <div class="page-wrapper">
+        <!-- Page-header start -->
+        <div class="page-header">
+            <div class="row align-items-end">
+                <div class="col-lg-8">
+                    <div class="page-header-breadcrumb">
+                        <ul class="breadcrumb-title">
+                            <li class="breadcrumb-item">
+                                <a href="index.html"> <i class="feather icon-home"></i> </a>
+                            </li>
+                            <li class="breadcrumb-item">Update Family</li>
+                        </ul>
+                    </div>
+                    <div style="clear: both"></div>
+                    <div class="page-header-title">
+                        <div class="d-inline">
+                            <h4>Update Family</h4>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <!-- Page-header end -->
+
+        <!-- Page-body start -->
+        <div class="page-body">
+            <div class="row">
+                <div class="col-sm-12">
+                    <!-- Zero config.table start -->
+                    <div class="card">
+                        <div class="card-block">
+                            <div class="mT-30">@include('common.error')
+                                <form class="container" method="POST" action="{{ route('family.update', $family->id) }}" autocomplete="off">
+                                    @method('PATCH')
+                                    @csrf
+                                    <input type="hidden" name="id" value="{{ ( !empty($family->id) ? $family->id : '') }}">
+                                    <input type="hidden" name="family_sub_mst_id" value="{{ ( !empty($family_profile[0]->family_sub_mst_id) ? $family_profile[0]->family_sub_mst_id : '') }}">
+                                    <input type="hidden" name="profile_id" value="{{ ( !empty($family_profile[0]->profile_id) ? $family_profile[0]->profile_id : '') }}">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Agency<span class="red">*</span></label>
+                                            <select class="form-control agency_id" name="agency_id" id="agency_id" required>
+                                                <option value="">--Select--</option>
+                                                @foreach($agency as $row)
+                                                    <option value="{{ $row->agency_id }}" <?php if ($family->agency_id == $row->agency_id) {echo 'selected';} ?>>{{ $row->agency_name}}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Federation<span class="red">*</span></label>
+                                            <select class="form-control federation_id" name="federation_id" id="federation_id" required>
+                                                <option value="">--Select--</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Cluster</label>
+                                            <select class="form-control cluster_uin" name="cluster_uin" id="cluster_uin">
+                                                <option value="">--Select--</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">SHG<span class="red">*</span></label>
+                                            <select class="form-control shg_uin" name="shg_uin" id="shg_uin" required>
+                                                <option value="">--Select--</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">SHG Member Name<span class="red">*</span></label>
+                                            <input type="text" class="form-control" name="fp_member_name"  value="{{  $family_profile[0]->fp_member_name }}" autocomplete="off" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">SRLM</label>
+                                            <input type="text" class="form-control" name="srlm_code" value="{{$family->srlm_code}}" autocomplete="off">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Age</label>
+                                            <input type="text" class="form-control value" name="fp_age"  value="{{  $family_profile[0]->fp_age }}" autocomplete="off" maxlength="3" minlength="2">
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Gender</label>
+                                            <select id="fp_gender" name="fp_gender" class="form-control fp_gender" >
+                                                <option value="">--Select--</option>
+                                                @foreach($gender as $row)
+                                                    <option value="{{ $row->gender_slug }}" <?php if ($family_profile[0]->fp_gender_c == $row->id) {echo 'selected';} ?>>{{ $row->gender_name}}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Caste</label>
+                                            <select id="fp_caste" name="fp_caste" class="form-control fp_caste" >
+                                                <option value="">--Select--</option>
+                                                @foreach($caste as $row)
+                                                    <option value="{{ $row->caste_slug }}" <?php if ($family_profile[0]->fp_caste_c == $row->id) {echo 'selected';} ?>>{{ $row->caste_name}}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Contact No</label>
+                                            <input type="text" class="form-control value" name="fp_contact_no"  value="{{  $family_profile[0]->fp_contact_no }}" minlength="8" maxlength="12" autocomplete="off"
+                                            >
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Aadhar No</label>
+                                            <input type="text" class="form-control value" name="fp_aadhar_no" value="{{  $family_profile[0]->fp_aadhar_no }}" autocomplete="off" maxlength="12" minlength="12">
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Pan No</label>
+                                            <input type="text" class="form-control" name="fp_pan"  value="{{  $family_profile[0]->fp_pan }}" autocomplete="off" >
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Spouse Name <span class="red">*</span></label>
+                                            <input type="text" class="form-control" name="fp_spouse_name"  value="{{  $family_profile[0]->fp_spouse_name }}" autocomplete="off" required >
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Country<span class="red">*</span></label>
+                                            <select class="form-control country" name="country" id="country" required>
+                                                <option value="">--Select--</option>
+                                                @foreach($countries as $row)
+                                                    <option value="{{ $row->id }}" <?php if ($family_profile[0]->fp_country_id == $row->id) {echo 'selected';} ?>>{{ $row->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">State<span class="red">*</span></label>
+                                            <select class="form-control state" name="state" id="state" required>
+                                                <option value="">--Select--</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">District</label>
+                                            <select class="form-control district" name="district" id="district" >
+                                                <option value="">--Select--</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Block</label>
+                                            <input type="text" id="fp_block" name="fp_block" class="form-control fp_block" value="{{  $family_profile[0]->fp_block }}" autocomplete="off">
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Village<span class="red">*</span></label>
+                                            <input type="text" id="fp_village" name="fp_village" class="form-control fp_village" value="{{  $family_profile[0]->fp_village }}" autocomplete="off" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="validationCustom02">Status<span class="red">*</span></label>
+                                            <select class="form-control status" name="status" id="status" required>
+                                                <option value="A" <?php echo $family->status == 'A' ? 'selected' :'' ?> > Active</option>
+                                                <option value="I" <?php echo $family->status == 'I' ? 'selected' :'' ?> > Inactive</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    @if ($user->u_type == 'CEO' || $user->u_type == 'A')
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3 text-center">
+                                            <button class="btn btn-sm btn-success" type="submit">Save</button>
+                                            <a href="{{ url('family') }}" class="btn btn-sm btn-danger">Back</a>
+                                        </div>
+                                    </div>
+                                    @endif
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Page-body end -->
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('#agency_id').on('change', get_federation_list);
+            $('#federation_id').on('change', get_cluster_list);
+            $('#cluster_uin').on('change', get_shg_list);
+            $('#federation_id').on('change', get_shg_list2);
+            $('#country').on('change', get_state_list);
+            $('#state').on('change', get_district_list);
+            $('#agency_id,#country,#federation_id,#cluster_uin').trigger("change");
+            $('#country,#state,#agency_id').attr("readonly", "readonly");
+            $("#country,#state,#agency_id").css("pointer-events", "none");
+
+        });
+
+
+        function get_state_list() {
+            var obj = $(this);
+            var country = obj.val();
+            if (country > 0) {
+                $.ajax({
+                    type: 'GET',
+                    url: '/get_state',
+                    data: '_token = <?php echo csrf_token() ?>&country=' + country,
+
+                    success: function (data) {
+                        if (data != '') {
+                            $('#state').html(data);
+                            $('#state').val("{{ $family_profile[0]->fp_state_id}}");
+                            $('#state').trigger("change");
+                        }
+                    }
+                });
+            }
+        }
+        function get_district_list() {
+            var obj = $(this);
+            var state = obj.val();
+            if (state > 0) {
+                $.ajax({
+                    type: 'GET',
+                    url: '/get_district',
+                    data: '_token = <?php echo csrf_token() ?>&state=' + state,
+
+                    success: function (data) {
+                        if (data != '') {
+                            $('#district').html(data);
+                            $('#district').val("{{ $family_profile[0]->fp_district_id}}");
+                            $('#district').trigger("change");
+                        }
+                    }
+                });
+            }
+        }
+        function get_federation_list() {
+            var obj = $(this);
+            var agency_id = obj.val();
+            if (agency_id > 0) {
+                $.ajax({
+                    type: 'GET',
+                    url: '/get_federation_list',
+                    data: '_token = <?php echo csrf_token() ?>&agency_id=' + agency_id,
+
+                    success: function (data) {
+                        if (data != '') {
+                            $('#federation_id').html(data);
+                            $('#federation_id').val("{{ $family->federation_uin}}");
+                            $('#federation_id').trigger("change");
+                        }
+                    }
+                });
+            }
+        }
+        function get_cluster_list() {
+            var obj = $(this);
+            var federation_id = obj.val();
+            if (federation_id != '') {
+                $.ajax({
+                    type: 'GET',
+                    url: '/get_cluster_list',
+                    data: '_token = <?php echo csrf_token() ?>&federation_id=' + federation_id,
+
+                    success: function (data) {
+                        if (data != '') {
+                            $('#cluster_uin').html(data);
+                            $('#cluster_uin').val("{{ $family->cluster_uin}}");
+                            $('#cluster_uin').trigger("change");
+                        }
+                    }
+                });
+            }
+        }
+        function get_shg_list() {
+            var obj = $(this);
+            var cluster_id = obj.val();
+            if (cluster_id != '') {
+                $.ajax({
+                    type: 'GET',
+                    url: '/get_shg_list',
+                    data: '_token = <?php echo csrf_token() ?>&cluster_id=' + cluster_id,
+                    success: function (data) {
+                        if (data != '') {
+                            $('#shg_uin').html(data);
+                            $('#shg_uin').val("{{ $family->shg_uin}}");
+                        }
+                    }
+                });
+            }
+        }
+        function get_shg_list2() {
+            var obj = $(this);
+            var federation_id = obj.val();
+            if (federation_id != '') {
+                $.ajax({
+                    type: 'GET',
+                    url: '/get_shg_list2',
+                    data: '_token = <?php echo csrf_token(); ?>&federation_id=' + federation_id,
+                    success: function(data) {
+                        if (data != '') {
+                            $('#shg_uin').html(data);
+                            $('#shg_uin').trigger("change");
+                        }
+                    }
+                });
+            }
+        }
+
+        (function($) {
+          $.fn.inputFilter = function(inputFilter) {
+            return this.on("input keydown keyup mousedown mouseup select contextmenu drop", function() {
+              if (inputFilter(this.value)) {
+                this.oldValue = this.value;
+                this.oldSelectionStart = this.selectionStart;
+                this.oldSelectionEnd = this.selectionEnd;
+              } else if (this.hasOwnProperty("oldValue")) {
+                this.value = this.oldValue;
+                this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
+              }
+            });
+          };
+        }(jQuery));
+
+         $(".value").inputFilter(function(value) {
+           return /^-?\d*[.,]?\d{0,2}$/.test(value) && (value === "" || parseInt(value) <= 999999999999); });
+    </script>
+@endsection

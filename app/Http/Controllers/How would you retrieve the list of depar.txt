@@ -1,0 +1,14 @@
+How would you retrieve the list of departments and the count of employees in each department from the employees table?
+
+select count(employees) ,departments from employees group by department
+
+Given a table employees with columns id, name, department, and salary, write a query to find the second highest salary.
+
+select salary from employees order  by salary desc offset 1 limit 1
+
+
+  validate({
+    'name' => 'required'
+  })
+
+  php migration make table

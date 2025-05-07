@@ -1,0 +1,64 @@
+.body-bg{
+    background: url(../img/bg.jpg);
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 100%;
+}
+.form-control1{
+    height: 50px;
+    border-radius: 0px;
+}
+.form-control{
+    border-radius: 0px;
+}
+.btnn{
+    border-radius: 0px;
+    height: 50px;
+    color: #000000;
+    font-weight: bold;
+}
+.img_pos{
+    padding-left: 50px;
+    text-align: left;
+    padding-top: 40px;
+}
+.img_pos1{
+    padding-left: 50px;
+    text-align: left;
+    padding-top: 10px;
+}
+@media(max-width:768px){
+    .img_pos{
+        padding-left: 0px;
+        text-align: center;
+        padding-top: 15px;
+    }
+    .img_pos1{
+        padding-left: 0px;
+        text-align: left;
+        padding-top: 10px;
+    }
+}
+
+.partnerlogos {
+    position:absolute;
+    bottom:20px;
+    width:98%;
+}
+.partnerlogos img {
+    width:160px;
+    border-radius:5px;
+    /* padding: 10px; */
+    margin-bottom: 10px;
+}
+@media(max-width:768px){
+    .partnerlogos {
+        position: relative;;
+        /* bottom:20px; */
+        width:100%;
+    }
+}
+.bg-tra{
+    background-color: rgba(255,255,255,0.75);
+}
+

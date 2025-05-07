@@ -1,0 +1,439 @@
+@extends('layouts.app')
+
+@section('content')
+    @php $user = \Illuminate\Support\Facades\Auth::user(); $user_id = $user->id; @endphp
+    <style type="text/css">
+        .labelval,
+        .label {
+            color: black !important;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        tr {
+            height: 50px
+        }
+    </style>
+    <div class="page-wrapper">
+        <!-- Page-header start -->
+        <div class="page-header">
+            <div class="row align-items-end">
+                <div class="col-lg-8">
+                    <div class="page-header-breadcrumb">
+                        <ul class="breadcrumb-title">
+                            <li class="breadcrumb-item">
+                                <a href="index.html"> <i class="feather icon-home"></i> </a>
+                            </li>
+                            @if ($user->u_type == 'M')
+                                <li class="breadcrumb-item">District Manager Check</li>
+                            @else
+                                <li class="breadcrumb-item"> Quality Manager Check</li>
+                            @endif
+                        </ul>
+                    </div>
+                    @php $session_data = Session::get('quality_filter_session'); @endphp
+                    <div style="clear: both"></div>
+                    <div class="page-header-title">
+                        <div class="d-inline">
+                            @if ($user->u_type == 'M')
+                                <h4>District Manager Check</h4>
+                            @else
+                                <h4> Quality Manager Check</h4>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-right">
+                    <div class="export_icon_css" style="margin-top:-32px ;  !important;">
+                        <a href="{{ url('quality_export') }}" id="export">
+                            <img src="{{ asset('assets\images\excel.png') }}" data-toggle="tooltip" title="Excel Export"
+                                data-src="{{ asset('assets\images\excel.png') }}"
+                                srcset="https://image.flaticon.com/icons/png/512/732/732220.png 4x" alt="Excel Export"
+                                title="Excel" class="lzy lazyload--done" style="height: 35px; margin-right: 25px;">
+                        </a>
+                    </div>
+                    <div class="export_pdf_css" style="margin-top:-32px ;  !important;">
+                        <a href="{{ URL::to('/quality_check_pdf') }}">
+                            <img src="{{ asset('assets\images\pdf.png') }}" data-toggle="tooltip" title="PDF Download"
+                                alt="PDF Download" title="PDF Download" class="lzy lazyload--done" style="height: 35px;">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-body">
+            <div class="row">
+                <div class="col-sm-12">
+                    <!-- Zero config.table start -->
+                    <div class="card">
+                        <div class="card-block">
+                            @if ($user->u_type == 'M')
+
+                                <form class="container" method="GET" action="{{ url('qualitycheck') }}"
+                                    id="needs-validation" autocomplete="off" disabled>
+                                    @csrf
+                                    <div class="row">
+
+                                        <div class="col-md-3 mb-3">
+                                            <label for="validationCustom02">Group Type<span class="red">*</span></label>
+                                            <select class="form-control" name="group" id="group" required>
+                                                <option value="">--Select--</option>
+                                                <option value="ALL">All</option>
+                                                <option value="FD">Federation</option>
+                                                <option value="CL">Cluster</option>
+                                                <option value="SH">SHG</option>
+                                                <option value="FM">Family</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="validationCustom02">Status<span class="red">*</span></label>
+                                            <select class="form-control" name="type" id="type" required>
+                                                <option value="">--Select--</option>
+                                                <option value="ALL">All</option>
+                                                <option value="P">Pending</option>
+                                                <option value="C">Complete</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-3" id="agency_div">
+                                            <label for="validationCustom02">Agency</label>
+                                            <select class="form-control " name="agency" id="agency" >
+                                                <option value="">--Select--</option>
+                                                @foreach ($agency as $row)
+                                                    <option value="{{ $row->agency_id }}">
+                                                        {{ $row->agency_name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-3" id="fac_div">
+                                            <label for="validationCustom02">Facilitator</label>
+                                            <select class="form-control " name="facilitator" id="facilitator" >
+                                                <option value="">--Select--</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-3" id="fed_div">
+                                            <label for="validationCustom02">Federation</label>
+                                            <select class="form-control " name="federation" id="federation" >
+                                                <option value="">--Select--</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-3 mb-3" id="clus_div">
+                                            <label for="validationCustom02">Cluster</label>
+                                            <select class="form-control " name="cluster" id="cluster">
+                                                <option value="">--Select--</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-3" id="shg_div">
+                                            <label for="validationCustom02">SHG</label>
+                                            <select class="form-control " name="shg" id="shg" >
+                                                <option value="">--Select--</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-3" id="family_div">
+                                            <label for="validationCustom02">Family</label>
+                                            <select class="form-control" name="family" id="family">
+                                                <option value="">--Select--</option>
+                                            </select>
+                                        </div>
+
+
+                                        <div class="col-md-2 mb-3">
+                                            <label for="validationCustom02">&nbsp;</label>
+                                            <input type="submit" class="btn btn-sm btn-success" id="search"
+                                                name="Search" value="Search" style="float:left;margin-top: 2.5em;">
+
+                                            <button class="btn  btn-sm btn-danger" name="clear" value="clear"
+                                                style="float: left;;margin-top:2.5em;margin-left: 10px;">Clear</button>
+
+                                        </div>
+                                    </div>
+                                </form>
+
+                                @if (!empty($session_data['group']))
+                                    <div class="dt-responsive table-responsive">
+                                        @include('common.error')
+                                        <table id="simpletable" class="table table-striped table-bordered nowrap">
+                                            <thead>
+                                                <tr>
+                                                    <th>S.No</th>
+                                                    <th width="20%">UIN</th>
+                                                    <th width="15%">Name</th>
+                                                    <th width="15%">Type</th>
+                                                    <th width="10%">Facilitator</th>
+                                                    <th width="10%">Task</th>
+                                                    <th width="10%">Manger Status</th>
+                                                    <th width="10%">Manager Update</th>
+                                                    <th width="10%">Quality Status</th>
+                                                    <th width="10%">Quality Update</th>
+                                                    @if ($u_type == 'M' || $u_type == 'QA')
+                                                        <th width="10%">Action</th>
+                                                    @endif
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
+                            @else
+                                <form class="container" method="GET" action="{{ url('qualitycheck') }}"
+                                    id="needs-validation" autocomplete="off" disabled>
+                                    @csrf
+                                    <div class="row">
+
+                                        <div class="col-md-4 mb-3" style="margin-left: -40px;">
+                                            <label for="validationCustom02">Group Type</label>
+                                            <select class="form-control" name="group" id="group" required>
+                                                <option value="">--Select--</option>
+                                                <option value="ALL">All</option>
+                                                <option value="FD">Federation</option>
+                                                <option value="CL">Cluster</option>
+                                                <option value="SH">SHG</option>
+                                                <option value="FM">Family</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="validationCustom02">Status</label>
+                                            <select class="form-control" name="type" id="type" required>
+                                                <option value="">--Select--</option>
+                                                <option value="ALL">All</option>
+                                                <option value="P">Pending</option>
+                                                <option value="C">Complete</option>
+                                            </select>
+                                        </div>
+
+
+                                        <div class="col-md-2 mb-3">
+                                            <label for="validationCustom02">&nbsp;</label>
+                                            <input type="submit" class="btn btn-sm btn-success" id="search"
+                                                name="Search" value="Search" style="float:left;margin-top: 2.5em;">
+
+                                            <button class="btn  btn-sm btn-danger" name="clear" value="clear"
+                                                style="float: left;;margin-top:2.5em;margin-left: 10px;">Clear</button>
+
+                                        </div>
+                                    </div>
+                                </form>
+
+                                @if (!empty($session_data['group']))
+                                    <div class="dt-responsive table-responsive">
+                                        @include('common.error')
+                                        <table id="simpletable" class="table table-striped table-bordered nowrap">
+                                            <thead>
+                                                <tr>
+                                                    <th>S.No</th>
+                                                    <th width="20%">UIN</th>
+                                                    <th width="15%">Name</th>
+                                                    <th width="15%">Type</th>
+                                                    <th width="10%">Facilitator</th>
+                                                    <th width="10%">Task</th>
+                                                    <th width="10%">Manger Status</th>
+                                                    <th width="10%">Manager Update</th>
+                                                    <th width="10%">Quality Status</th>
+                                                    <th width="10%">Quality Update</th>
+                                                    @if ($u_type == 'M' || $u_type == 'QA')
+                                                        <th width="10%">Action</th>
+                                                    @endif
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
+                            @endif
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Page-body end -->
+    </div>
+
+    <script src="{{ asset('bower_components\datatables.net\js\jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('bower_components\datatables.net-buttons\js\dataTables.buttons.min.js') }}"></script>
+    <script src="{{ asset('assets\pages\data-table\js\jszip.min.js') }}"></script>
+    <script src="{{ asset('assets\pages\data-table\js\pdfmake.min.js') }}"></script>
+    <script src="{{ asset('assets\pages\data-table\js\vfs_fonts.js') }}"></script>
+    <script src="{{ asset('bower_components\datatables.net-buttons\js\buttons.print.min.js') }}"></script>
+    <script src="{{ asset('bower_components\datatables.net-buttons\js\buttons.html5.min.js') }}"></script>
+    <script src="{{ asset('bower_components\datatables.net-bs4\js\dataTables.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('bower_components\datatables.net-responsive\js\dataTables.responsive.min.js') }}"></script>
+    <script src="{{ asset('bower_components\datatables.net-responsive-bs4\js\responsive.bootstrap4.min.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            $('#agency_div,#fed_div,#clus_div,#shg_div,#family_div,#fac_div').hide();
+            $('#agency,#federation,#clus,#shg,#family').attr('required', false);
+            $('#agency').on('change', get_federation_list);
+            $('#agency').on('change', get_facilitator_list);
+            $('#federation').on('change', get_cluster_list);
+            $('#cluster').on('change', get_shg_list);
+            $('#shg').on('change', get_family_lists);
+            @php echo !empty($session_data["agency"])  ? "$('#agency').val('".$session_data["agency"]."');$('#agency').trigger('change');" : "" @endphp
+
+            $('#table2').hide();
+            $('#table1').hide();
+            @php echo !empty($session_data["group"])  ? "$('#group').val('".$session_data["group"]."');$('#group').trigger('change');" : "" @endphp
+            @php echo !empty($session_data['type']) ? "$('#type').val('" . $session_data['type'] . "');" : '' @endphp
+        });
+        $('#group').change(function() {
+            var grp = $(this).val();
+            // alert(grp);
+            if (grp == 'ALL') {
+                $('#fed_div,#clus_div,#shg_div,#family_div').hide();
+                // $('#federation,#clus,#shg,#family').attr('required', false);
+                $('#federation,#clus,#shg,#family').val('');
+                $('#agency_div,#agency,#fac_div,#facilitator').show();
+            } else if (grp == 'FD') {
+                $('#clus_div,#shg_div,#family_div,#clus,#shg,#family').hide();
+                $('#agency_div,#fed_div,#agency,#federation,#fac_div').show();
+                $('#clus,#shg,#family').val('');
+            } else if (grp == 'CL') {
+                $('#shg_div,#family_div,#family,#shg').hide();
+                $('#agency_div,#fed_div,#clus_div,#agency,#federation,#clus,#fac_div').show();
+                $('#shg,#family').val('');
+            } else if (grp == 'SH') {
+                $('#family_div,#family').hide();
+                $('#agency_div,#fed_div,#clus_div,#shg_div,#agency,#federation,#clus,#shg,#fac_div').show();
+                $('#family').val('');
+            } else if (grp == 'FM') {
+                $('#agency_div,#fed_div,#clus_div,#shg_div,#family_div,#agency,#federation,#clus,#shg,#family,#fac_div').show();
+            }
+        });
+
+        function get_facilitator_list() {
+            var obj = $(this);
+            var agency_id = obj.val();
+            var dm_id = {{ $user_id }};
+            // alert(dm_id);
+            if (agency_id > 0) {
+                $.ajax({
+                    type: 'GET',
+                    url: '/get_facilitator_list_task',
+                    data: '_token = <?php echo csrf_token(); ?>&agency_id=' + agency_id + '&dm_id=' + dm_id,
+                    success: function(data) {
+                        if (data != '') {
+                            $('#facilitator').html(data);
+                            @php echo !empty($session_data["facilitator"])  ? "$('#facilitator').val('".$session_data["facilitator"]."');" : "" @endphp
+                            // $('#facilitator').trigger("change");
+                        }
+                    }
+                });
+            }
+        }
+
+        function get_federation_list() {
+            var obj = $(this);
+            var agency_id = obj.val();
+            if (agency_id > 0) {
+                $.ajax({
+                    type: 'GET',
+                    url: '/get_federation_list',
+                    data: '_token = <?php echo csrf_token(); ?>&agency_id=' + agency_id,
+                    success: function(data) {
+                        if (data != '') {
+                            $('#federation').html(data);
+                            @php echo !empty($session_data["federation"])  ? "$('#federation').val('".$session_data["federation"]."');" : "" @endphp
+                            $('#federation').trigger("change");
+                        }
+                    }
+                });
+            }
+        }
+
+        function get_cluster_list() {
+            var obj = $(this);
+            var federation_id = obj.val();
+            if (federation_id != '') {
+                $.ajax({
+                    type: 'GET',
+                    url: '/get_cluster_list',
+                    data: '_token = <?php echo csrf_token(); ?>&federation_id=' + federation_id,
+                    success: function(data) {
+                        if (data != '') {
+                            $('#cluster').html(data);
+                            @php echo !empty($session_data["cluster"])  ? "$('#cluster').val('".$session_data["cluster"]."');" : "" @endphp
+                            $('#cluster').trigger("change");
+                        }
+                    }
+                });
+            }
+        }
+
+        function get_shg_list() {
+            var obj = $(this);
+            var cluster_id = obj.val();
+            if (cluster_id != '') {
+                $.ajax({
+                    type: 'GET',
+                    url: '/get_shg_list',
+                    data: '_token = <?php echo csrf_token(); ?>&cluster_id=' + cluster_id,
+                    success: function(data) {
+                        if (data != '') {
+                            $('#shg').html(data);
+                            @php echo !empty($session_data["shg"])  ? "$('#shg').val('".$session_data["shg"]."');" : "" @endphp
+                            $('#shg').trigger("change");
+                        }
+                    }
+                });
+            }
+        }
+
+        function get_family_lists() {
+            var obj = $(this);
+            var shg_id = obj.val();
+            if (shg_id != '') {
+                $.ajax({
+                    type: 'GET',
+                    url: '/get_family_lists',
+                    data: '_token = <?php echo csrf_token(); ?>&shg_id=' + shg_id,
+                    success: function(data) {
+                        if (data != '') {
+                            $('#family').html(data);
+                            @php echo !empty($session_data["family"])  ? "$('#family').val('".$session_data["family"]."');" : "" @endphp
+
+                            // $('#family').trigger("change");
+                        }
+                    }
+                });
+            }
+        }
+        $(function() {
+            var table = $('#simpletable').DataTable({
+                "processing": true,
+                "serverSide": true, //Feature control DataTables' servermside processing mode.
+                "bFilter": true,
+                "bLengthChange": false,
+                "ordering": false,
+                "iDisplayLength": 10,
+                "responsive": false,
+                "ajax": {
+                    "url": '{{ url('qualitycheck') }}',
+                    "type": "GET",
+                    "dataType": "json",
+                    "data": function(data) {
+                        // manipulate data used in ajax request prior to server call
+                        delete data.columns;
+                    },
+                    "dataSrc": function(jsonData) {
+                        return jsonData.data;
+                    }
+                },
+                //Set column definition initialisation properties.
+                "columnDefs": [{
+                    "targets": [0], //first column / numbering column
+                    "orderable": false, //set not orderable
+                }, ],
+
+            });
+            // dataTable();
+        });
+    </script>
+
+@endsection
+<!-- data-table js -->

@@ -1,0 +1,1567 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "BRLF MIS",
+    "description": "Collect Different State MIS Data into BRLF MIS ",
+    "version": ""
+  },
+  "servers": [
+    {
+      "url": "https://mis.brlf.in/"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "JWTAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "paths": {
+    "/State_mis/auth": {
+      "post": {
+        "tags": [
+          "Master"
+        ],
+        "summary": "User Authentication",
+        "description": "Return a Json array",
+        "operationId": "auth",
+        "consumes": "application/x-www-form-urlencoded",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "UserName": {
+                    "type": "string",
+                    "description": "Enter UserName",
+                    "required": true
+                  },
+                  "Password": {
+                    "type": "string",
+                    "format": "password",
+                    "description": "Enter password",
+                    "required": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/get_common_master": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "This API return Common Master List",
+        "description": "Return a Json array",
+        "operationId": "get_common_master",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/get_csoList": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "This API returns CSO list and CSO ID",
+        "description": "Return a Json array",
+        "operationId": "get_csoList",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/get_stateList": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "This API returns State List",
+        "description": "Return a Json array",
+        "operationId": "get_stateList",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/get_LocationMaster": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "This API returns all location data after passing State ID",
+        "description": "Return a Json array",
+        "operationId": "get_LocationMaster",
+        "parameters": [
+          {
+            "name": "id_mststate",
+            "in": "query",
+            "description": "Enter State ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/get_indicatorList": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "This API returns Theme, Activity, SubActivity and Indicators",
+        "description": "Return a Json array",
+        "operationId": "get_indicatorList",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/get_callProposalList": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "This API returns call proposal list",
+        "description": "Return a Json array",
+        "operationId": "get_callProposalList",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/get_proposalList": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "This API returns Proposal List",
+        "description": "Return a Json array",
+        "operationId": "Proposal",
+        "parameters": [
+          {
+            "name": "id_mstcallproposal",
+            "in": "query",
+            "description": "Enter Call Proposal ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/get_projectList": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "This API returns Project list and Project ID",
+        "description": "Return a Json array",
+        "operationId": "get_projectList",
+        "parameters": [
+          {
+            "name": "id_mstpartner",
+            "in": "query",
+            "description": "Enter PartnerID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/get_householdList": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "This API returns Household List",
+        "description": "Return a Json array",
+        "operationId": "get_householdList",
+        "parameters": [
+          {
+            "name": "id_mstproject",
+            "in": "query",
+            "description": "Enter Project ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hh_guid",
+            "in": "query",
+            "description": "Enter Household guid",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/get_interventionList": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "This API returns Intervention List",
+        "description": "Return a Json array",
+        "operationId": "get_interventionList",
+        "parameters": [
+          {
+            "name": "id_mstproject",
+            "in": "query",
+            "description": "Enter Project ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "intervention_guid",
+            "in": "query",
+            "description": "Enter Intervention guid",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/get_institutionList": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "This API returns Institution List",
+        "description": "Return a Json array",
+        "operationId": "get_institutionList",
+        "parameters": [
+          {
+            "name": "id_mstproject",
+            "in": "query",
+            "description": "Enter Project ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/get_year_number_by_project_id": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "This API returns year number of project",
+        "description": "Return a Json array",
+        "operationId": "get_year_number_by_project_id",
+        "parameters": [
+          {
+            "name": "id_mstproject",
+            "in": "query",
+            "description": "Enter Project ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/upload_cso_data": {
+      "post": {
+        "tags": [
+          "Upload CSO Profile Data"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "Creates CSO profile given input array",
+        "description": "Creates CSO profile given input array",
+        "operationId": "upload_cso_data",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array"
+              },
+              "examples": {
+                "application/json": {
+                  "value": [
+                    {
+                      "pguid": "abcd1234",
+                      "organisation_name": "MJVS",
+                      "head_of_organisation": "Abhiram Panigrahi",
+                      "first_name": "SIDI",
+                      "last_name": "SIDI",
+                      "short_name": "test",
+                      "email": "abc@gmail.com",
+                      "pan_number": "AMJHU8987I",
+                      "password": "password",
+                      "contact_person": "Test member",
+                      "mobile": "9999999999",
+                      "landline": "06632540061",
+                      "address": "At/Po- Jamankira, Dist.- Sambalpur, Pin-768107, Odisha",
+                      "pincode": "787878",
+                      "id_mststate": "18",
+                      "id_mstdistrict": "138",
+                      "website": "mis.belf.in",
+                      "mode_registration": "Trust",
+                      "registration_number": "SBL5577/14790",
+                      "date_registration": "2023-01-01",
+                      "number_12_a": "Judl/70/12A/95-96/12296",
+                      "tanno": "BBNS04710G",
+                      "eighty_g": "AA/Gwl/80G/89/12/2008-09",
+                      "is_registered_in_ngo_darpan": true,
+                      "has_fcra_registration": true,
+                      "fcra_registration_number": "105060039222",
+                      "fcra_registration_date": "2023-09-01",
+                      "organisation_portfolio": "Profile Of Organization ",
+                      "has_focus_tribal_livelihood": true,
+                      "has_focus_women": true,
+                      "has_focus_pri": true,
+                      "has_leveraging_resources_govt_flagship": true,
+                      "major_livelihood_themes": "Agriculture",
+                      "donor1": "Kusuma Foundation",
+                      "donor2": "Kusuma Foundation",
+                      "donor3": "Forest Dept., Govt. of Odisha",
+                      "budget1": "798879",
+                      "budget_year1": "2021-22",
+                      "budget2": "798798",
+                      "budget_year2": "2022-23",
+                      "budget3": "56769",
+                      "budget_year3": "2023-24",
+                      "audit_year1": "2020-21",
+                      "audit_year2": "2021-22",
+                      "audit_year3": "2022-23",
+                      "annual_year1": "2020-21",
+                      "annual_year2": "2021-22",
+                      "annual_year3": "2022-23",
+                      "caste_sc": "10",
+                      "caste_st": "4",
+                      "caste_obc": "5",
+                      "caste_general": "10",
+                      "caste_women": "23",
+                      "caste_minority": "12",
+                      "caste_na": "9",
+                      "iagree_withyou": true,
+                      "audit_year1_filename": "base 64 encoded file string will be here",
+                      "audit_year2_filename": "base 64 encoded file string will be here",
+                      "audit_year3_filename": "base 64 encoded file string will be here",
+                      "annual_year1_filename": "base 64 encoded file string will be here",
+                      "annual_year2_filename": "base 64 encoded file string will be here",
+                      "annual_year3_filename": "base 64 encoded file string will be here",
+                      "fcra_certificate_filename": "base 64 encoded file string will be here",
+                      "certificate_12_a_filename": "base 64 encoded file string will be here",
+                      "registration_certificate_filename": "base 64 encoded file string will be here",
+                      "mstpartner_geographic_coverage": [
+                        {
+                          "pguid": "abcd1234",
+                          "pgc_guid": "yui1234",
+                          "id_mststate": "1",
+                          "id_mstdistrict": "2"
+                        },
+                        {
+                          "pguid": "abcd1234",
+                          "pgc_guid": "yaer234",
+                          "id_mststate": "1",
+                          "id_mstdistrict": "2"
+                        }
+                      ],
+                      "mstpartner_board_members": [
+                        {
+                          "pguid": "abcd1234",
+                          "pbm_guid": "erwrecv1234",
+                          "name": "Test User",
+                          "designation": "Secretary",
+                          "email": "test@gmail.com",
+                          "phone": "9999999999",
+                          "pan": "HJUYT8789U",
+                          "relationship_board_members": "NA"
+                        },
+                        {
+                          "pguid": "abcd1234",
+                          "pbm_guid": "rrsr1234",
+                          "name": "Test User 2",
+                          "designation": "Secretary",
+                          "email": "test@gmail.com",
+                          "phone": "9999999999",
+                          "pan": "HJUYT8789U",
+                          "relationship_board_members": "NA"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Household_data": {
+                    "value": "{'status' => 1,'message' => 'Data inserted successfully'}"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No data sent with request",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/upload_household_data": {
+      "post": {
+        "tags": [
+          "Upload Household Data"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "Creates household with given input array of size 100 maximum at a time",
+        "description": "Creates household with given input array of size 100 maximum at a time",
+        "operationId": "upload_household_data",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array"
+              },
+              "examples": {
+                "application/json": {
+                  "value": [
+                    {
+                      "hh_guid": "abcd1234",
+                      "id_mstpartner": "10",
+                      "id_mstproject": "5",
+                      "id_mststate": "18",
+                      "id_mstdistrict": "4",
+                      "id_mstblock": "5",
+                      "id_mstvillage": "3",
+                      "member_name": "Test member",
+                      "father_spouse_name": "Test data",
+                      "gender_id": "1",
+                      "age": "10",
+                      "social_category_id": "10",
+                      "is_pvtg": true,
+                      "id_msttribe": "10",
+                      "mobile": "9999999999",
+                      "is_bpl": true,
+                      "house_have_electricity_connection": true,
+                      "house_type_id": "10",
+                      "is_house_constructed_pmay": true,
+                      "is_toilet_constructed_sba": true,
+                      "family_size_male": "5",
+                      "family_size_female": "3",
+                      "income_agriculture_amount": "100",
+                      "income_livestock_amount": "50",
+                      "income_labour_amount": "20",
+                      "income_ntfp_amount": "50",
+                      "income_microenterprise_amount": "50",
+                      "income_other_sources_amount": "90",
+                      "totalsourcesofannual_income": "440",
+                      "land_agri_ir": "10",
+                      "land_agri_non_ir": "20",
+                      "land_agri_total": "30",
+                      "land_waste_ir": "30",
+                      "land_waste_non_ir": "40",
+                      "land_waste_total": "70",
+                      "land_fallow_ir": "10",
+                      "land_fallow_non_ir": "10",
+                      "land_fallow_total": "20",
+                      "land_forest_ir": "20",
+                      "land_forest_non_ir": "50",
+                      "land_forest_total": "70",
+                      "does_migrate": true,
+                      "migration_days": "100",
+                      "migration_income": "2",
+                      "migration_work_type": "2",
+                      "migration_type": "1",
+                      "access_fra": true,
+                      "access_alltypeofpersionscheme": true,
+                      "access_ujjawalascheme": true,
+                      "access_pmsurakhshabimayojna": true,
+                      "access_pmjeevanjyotibimayojna": true,
+                      "access_fasalbimaYajna": true,
+                      "access_jobcard": true,
+                      "access_pds": true,
+                      "access_health_scheme": true,
+                      "access_notaccessanycentral": true,
+                      "survey_date": "2023-01-01",
+                      "hash_land": true,
+                      "marital_status": "0",
+                      "family_members": [
+                        {
+                          "hh_guid": "abcd1234",
+                          "hh_fm_guid": "hjk1234",
+                          "name": "Lalita Paule",
+                          "relation_id": "1",
+                          "gender_id": "2",
+                          "age": "35",
+                          "qualification_id": "1",
+                          "id_mstshg": "0",
+                          "id_mstfpo": "0",
+                          "id_mstvdc": "0",
+                          "id_mstproducergroup": "3844",
+                          "membership_type_id": "2",
+                          "card_type": "1",
+                          "card_number": "337026490316",
+                          "other_card_name": "",
+                          "as_on_year": "2019"
+                        },
+                        {
+                          "hh_guid": "abcd1234",
+                          "hh_fm_guid": "jkli1234",
+                          "name": "Jay Paule",
+                          "relation_id": "1",
+                          "gender_id": "2",
+                          "age": "35",
+                          "qualification_id": "1",
+                          "id_mstshg": "0",
+                          "id_mstfpo": "0",
+                          "id_mstvdc": "0",
+                          "id_mstproducergroup": "3844",
+                          "membership_type_id": "2",
+                          "card_type": "1",
+                          "card_number": "337026490316",
+                          "other_card_name": "",
+                          "as_on_year": "2019"
+                        }
+                      ],
+                      "loans": [
+                        {
+                          "hh_guid": "abcd1234",
+                          "id_mstloansource": "1",
+                          "reason_id": "0",
+                          "interest_rate": "0.00",
+                          "amount": "0.00",
+                          "loan_outstanding": "0.00"
+                        },
+                        {
+                          "hh_guid": "abcd1234",
+                          "id_mstloansource": "1",
+                          "reason_id": "0",
+                          "interest_rate": "0.00",
+                          "amount": "0.00",
+                          "loan_outstanding": "0.00"
+                        }
+                      ],
+                      "crops": [
+                        {
+                          "hh_guid": "abcd1234",
+                          "hh_crop_guid": "bnmj1234",
+                          "id_mstseason": "1",
+                          "id_mstcrop": "2",
+                          "area_hectare": "10",
+                          "other_crop": "test"
+                        },
+                        {
+                          "hh_guid": "abcd1234",
+                          "hh_crop_guid": "hkjk1234",
+                          "id_mstseason": "1",
+                          "id_mstcrop": "2",
+                          "area_hectare": "10",
+                          "other_crop": "Test"
+                        }
+                      ],
+                      "assets": [
+                        {
+                          "hh_guid": "abcd1234",
+                          "hh_assets_guid": "fgh1234",
+                          "id_msthousehold_assets": "1",
+                          "number": "0"
+                        },
+                        {
+                          "hh_guid": "abcd1234",
+                          "hh_assets_guid": "jklo1234",
+                          "id_msthousehold_assets": "2",
+                          "number": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "hh_guid": "xyz1234",
+                      "id_mstpartner": "10",
+                      "id_mstproject": "5",
+                      "id_mststate": "18",
+                      "id_mstdistrict": "4",
+                      "id_mstblock": "5",
+                      "id_mstvillage": "3",
+                      "member_name": "Test member",
+                      "father_spouse_name": "Test data",
+                      "gender_id": "1",
+                      "age": "10",
+                      "social_category_id": "10",
+                      "is_pvtg": true,
+                      "id_msttribe": "10",
+                      "mobile": "9999999999",
+                      "is_bpl": true,
+                      "house_have_electricity_connection": true,
+                      "house_type_id": "10",
+                      "is_house_constructed_pmay": true,
+                      "is_toilet_constructed_sba": true,
+                      "family_size_male": "5",
+                      "family_size_female": "3",
+                      "income_agriculture_amount": "100",
+                      "income_livestock_amount": "50",
+                      "income_labour_amount": "20",
+                      "income_ntfp_amount": "50",
+                      "income_microenterprise_amount": "50",
+                      "income_other_sources_amount": "90",
+                      "totalsourcesofannual_income": "440",
+                      "land_agri_ir": "10",
+                      "land_agri_non_ir": "20",
+                      "land_agri_total": "30",
+                      "land_waste_ir": "30",
+                      "land_waste_non_ir": "40",
+                      "land_waste_total": "70",
+                      "land_fallow_ir": "10",
+                      "land_fallow_non_ir": "10",
+                      "land_fallow_total": "20",
+                      "land_forest_ir": "20",
+                      "land_forest_non_ir": "50",
+                      "land_forest_total": "70",
+                      "does_migrate": true,
+                      "migration_days": "100",
+                      "migration_income": "2",
+                      "migration_work_type": "2",
+                      "migration_type": "1",
+                      "access_fra": true,
+                      "access_alltypeofpersionscheme": true,
+                      "access_ujjawalascheme": true,
+                      "access_pmsurakhshabimayojna": true,
+                      "access_pmjeevanjyotibimayojna": true,
+                      "access_fasalbimaYajna": true,
+                      "access_jobcard": true,
+                      "access_pds": true,
+                      "access_health_scheme": true,
+                      "access_notaccessanycentral": true,
+                      "survey_date": "2023-01-01",
+                      "hash_land": true,
+                      "marital_status": "0",
+                      "family_members": [
+                        {
+                          "hh_guid": "xyz1234",
+                          "hh_fm_guid": "gvhgh1234",
+                          "name": "Lalita Paule",
+                          "relation_id": "1",
+                          "gender_id": "2",
+                          "age": "35",
+                          "qualification_id": "1",
+                          "id_mstshg": "0",
+                          "id_mstfpo": "0",
+                          "id_mstvdc": "0",
+                          "id_mstproducergroup": "3844",
+                          "membership_type_id": "2",
+                          "card_type": "1",
+                          "card_number": "337026490316",
+                          "other_card_name": "",
+                          "as_on_year": "2019"
+                        },
+                        {
+                          "hh_guid": "xyz1234",
+                          "hh_fm_guid": "drtt1234",
+                          "name": "Jay Paule",
+                          "relation_id": "1",
+                          "gender_id": "2",
+                          "age": "35",
+                          "qualification_id": "1",
+                          "id_mstshg": "0",
+                          "id_mstfpo": "0",
+                          "id_mstvdc": "0",
+                          "id_mstproducergroup": "3844",
+                          "membership_type_id": "2",
+                          "card_type": "1",
+                          "card_number": "337026490316",
+                          "other_card_name": "",
+                          "as_on_year": "2019"
+                        }
+                      ],
+                      "loans": [
+                        {
+                          "hh_guid": "xyz1234",
+                          "id_mstloansource": "1",
+                          "reason_id": "0",
+                          "interest_rate": "0.00",
+                          "amount": "0.00",
+                          "loan_outstanding": "0.00"
+                        },
+                        {
+                          "hh_guid": "xyz1234",
+                          "id_mstloansource": "1",
+                          "reason_id": "0",
+                          "interest_rate": "0.00",
+                          "amount": "0.00",
+                          "loan_outstanding": "0.00"
+                        }
+                      ],
+                      "crops": [
+                        {
+                          "hh_guid": "xyz1234",
+                          "hh_crop_guid": "tyuu1234",
+                          "id_mstseason": "1",
+                          "id_mstcrop": "2",
+                          "area_hectare": "10",
+                          "other_crop": "test"
+                        },
+                        {
+                          "hh_guid": "xyz1234",
+                          "hh_crop_guid": "uioo1234",
+                          "id_mstseason": "1",
+                          "id_mstcrop": "2",
+                          "area_hectare": "10",
+                          "other_crop": "Test"
+                        }
+                      ],
+                      "assets": [
+                        {
+                          "hh_guid": "xyz1234",
+                          "hh_assets_guid": "tyutu1234",
+                          "id_msthousehold_assets": "1",
+                          "number": "0"
+                        },
+                        {
+                          "hh_guid": "xyz1234",
+                          "hh_assets_guid": "dfgg1234",
+                          "id_msthousehold_assets": "2",
+                          "number": "0"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Household_data": {
+                    "value": "{'status' => 1,'message' => 'Data inserted successfully'}"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Please upload 100 data at a time",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },          
+          "204": {
+            "description": "No data sent with request",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/upload_intervention_data": {
+      "post": {
+        "tags": [
+          "Upload Intervention Data"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "Upload intervention with given input array of size 100 maximum at a time",
+        "description": "Upload intervention with given input array of size 100 maximum at a time",
+        "operationId": "upload_intervention_data",
+        "requestBody": {
+          "name": "data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array"
+              },
+              "examples": {
+                "application/json": {
+                  "value": [
+                    {
+                      "intervention_guid": "abcd1234",
+                      "id_mstpartner": "21",
+                      "id_mstproject": "10",
+                      "id_mststate": "5",
+                      "id_mstdistrict": "97",
+                      "id_mstblock": "1257",
+                      "id_mstvillage": "149310",
+                      "id_mstgrampanchayat": null,
+                      "intervention_type": "1",
+                      "year_number": "1",
+                      "id_mst_theme": "5",
+                      "id_mst_activity": "86",
+                      "id_mst_subactivity": "18",
+                      "id_mst_indicator": "115",
+                      "description": "1 well constructed  with support from Kapildhara ",
+                      "date": "2019-01-10",
+                      "fund_cofinance": "0.00",
+                      "leverage_government": "230000.00",
+                      "leverage_community": "0.00",
+                      "fund_community": "0.00",
+                      "fund_brlf": "0.00",
+                      "total_budget": "230000.00",
+                      "participants_no": "",
+                      "remark": "Approved",
+                      "user_id": "59",
+                      "id_mstuom": "6",
+                      "mstuom_value": "1",
+                      "select_institution_yesno": true,
+                      "institution_type": "",
+                      "institution_select": "",
+                      "id_mstaddonproject": "",
+                      "mapping_method": "",
+                      "type_of_land": null,
+                      "hh_benefitted": null,
+                      "intervention_label": "4",
+                      "id_mstseason": null,
+                      "id_mstcrop": "2",
+                      "date_of_harvesting": null,
+                      "total_quantity_produced": null,
+                      "total_marketing_amount": null,
+                      "date_of_marketing": null,
+                      "total_quantity_sold": null,
+                      "total_marketing_price": null,
+                      "self_consumption": "",
+                      "existing_intervention": true,
+                      "participants": [
+                        {
+                          "intervention_guid": "abcd1234",
+                          "hh_guid": "xyz123",
+                          "hh_fm_guid": "pqr123"
+                        },
+                        {
+                          "intervention_guid": "abcd1234",
+                          "hh_guid": "xyz123",
+                          "hh_fm_guid": "pqr12345"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Household_data": {
+                    "value": "{'status' => 1,'message' => 'Data inserted successfully'}"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Please upload 100 data at a time",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No data sent with request",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/State_mis/upload_project_data": {
+      "post": {
+        "tags": [
+          "Upload Project Data"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ],
+        "summary": "Creates project with given input array",
+        "description": "Creates project with given input array",
+        "operationId": "upload_project_data",
+        "requestBody": {
+          "name": "data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array"
+              },
+              "examples": {
+                "application/json": {
+                  "value": [
+                    {
+                      "project_guid": "abcd1234",
+                      "id_mstpartner": "127",
+                      "id_mstcallproposal": "8",
+                      "project_title": "Upscaling Farming Aligned with Nature across Agro-ecologies in MP",
+                      "description": "Project description.",
+                      "start_date": "2023-07-01",
+                      "end_date": "2023-12-31",
+                      "remark": "Approved",
+                      "modified_by": "644",
+                      "is_finance": true,
+                      "sanction_letter": "base 64 encoded file string will be here",
+                      "annexure1_project_details": "base 64 encoded file string will be here",
+                      "annexure2_financial_and_debursement": "base 64 encoded file string will be here",
+                      "annexureD_final_budget": "base 64 encoded file string will be here",
+                      "annexureF_final_lfa": "base 64 encoded file string will be here",
+                      "activity_mapping_sheet": "base 64 encoded file string will be here",
+                      "grant_MOU": "base 64 encoded file string will be here",
+                      "tbl_project_budget_component": [
+                        {
+                          "project_guid": "abcd1234",
+                          "project_bc_guid": "ttt1234",
+                          "a_amount": "309000.00",
+                          "a_cost_per_hh": "618.00",
+                          "a_total_project_cost": "0.00",
+                          "b_amount": "31004.00",
+                          "b_cost_per_hh": "62.01",
+                          "b_total_project_cost": "4.77",
+                          "c_amount": "15842.00",
+                          "c_cost_per_hh": "31.68",
+                          "c_total_project_cost": "0.00",
+                          "d_amount": "294154.00",
+                          "d_cost_per_hh": "588",
+                          "d_total_project_cost": "0.00",
+                          "e_amount": "650000.00",
+                          "e_cost_per_hh": "1300.00",
+                          "e_total_project_cost": "100.00",
+                          "f_amount": "0.00",
+                          "f_cost_per_hh": "0.00",
+                          "f_total_project_cost": "0.00",
+                          "g_amount": "650000.00",
+                          "g_cost_per_hh": "1300.00",
+                          "g_total_project_cost": "0.00",
+                          "h_amount": "0.00",
+                          "h_cost_per_hh": "0.00",
+                          "h_total_project_cost": "0.00",
+                          "h1_amount": "0.00",
+                          "h1_cost_per_hh": "0.00",
+                          "h1_total_project_cost": "0.00",
+                          "h2_amount": "0.00",
+                          "h2_cost_per_hh": "0.00",
+                          "h2_total_project_cost": "0.00",
+                          "total_amount_leverage_amount": "0.00",
+                          "total_amount_leverage_cost_per_hh": "0.00",
+                          "total_amount_leverage_total_project_cost": "0.00"
+                        }
+                      ],
+                      "tblprojectdemographics": [
+                        {
+                          "project_guid": "abcd1234",
+                          "project_d_guid": "sdfg1234",
+                          "id_mststate": "5",
+                          "id_mstdistrict": "138",
+                          "id_mstblock": "1556",
+                          "id_mstvillage": "0",
+                          "gp_name": "NA",
+                          "gp_number": "0",
+                          "existing_hh": "0",
+                          "new_hh": "500"
+                        },
+                        {
+                          "project_guid": "abcd1234",
+                          "project_d_guid": "hkjh1234",
+                          "id_mststate": "5",
+                          "id_mstdistrict": "138",
+                          "id_mstblock": "1556",
+                          "id_mstvillage": "0",
+                          "gp_name": "NA",
+                          "gp_number": "0",
+                          "existing_hh": "0",
+                          "new_hh": "500"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Household_data": {
+                    "value": "{'status' => 1,'message' => 'Data inserted successfully'}"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No data sent with request",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "json"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

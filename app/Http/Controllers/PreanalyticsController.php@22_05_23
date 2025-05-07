@@ -1,0 +1,1620 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Preanalytics;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use PDF;
+use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\FederationTasklist;
+use App\Exports\ClusterTasklist;
+use App\Exports\ShgTasklist;
+use App\Exports\FamilyTasklist;
+
+class PreanalyticsController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        $data = [];
+        $data = [];
+        $data['agency'] = DB::table('agency')
+            ->where('is_deleted', '=', 0)
+            ->get()->toArray();
+        $data['facilitator_list'] = $this->facilitator_list();
+        return view('preanalytics.list')->with($data);
+    }
+
+    public function facilitator_list()
+    {
+        $facilitator_list = DB::table('users as a')
+            ->where('a.is_deleted', '=', 0)
+            ->where('a.u_type', '=', 'F')
+            ->select('a.id', 'a.name')
+            ->orderBy('a.name')
+            ->get()->toArray();
+
+        return $facilitator_list;
+    }
+    public function store_task(Request $request)
+    {
+        $view = 'preanalytics.list_tasks';
+
+        /* Check post either add or update */
+        if ($request->isMethod('post')) {
+            
+            try {
+                $result = DB::transaction(function () use ($request) {
+                    $validation_arr = [
+
+                        'agency_id' => ['required'],
+                        'user_id' => ['required'],
+                        'remark' => ['required'],
+                    ];
+
+                    $validator = Validator::make($request->all(), $validation_arr);
+                    if ($validator->fails()) {
+                        return redirect()->back()->withErrors($validator)->withInput();
+                    }
+                    $temp_rand = '';
+
+                    $user = Auth::User();
+                    $fed_mst_count = $request->post('federation_id');
+                    $cl_mst_count = $request->post('cluster_id');
+                    $sh_mst_count = $request->post('shg_id');
+                    $fm1_mst_count = $request->post('family_id_p1');
+                    $fm2_mst_count = $request->post('family_id_p2');
+                    $fmr_mst_count = $request->post('family_id_r');
+
+                    $result='';
+                    //federation save
+                    if (!empty($fed_mst_count)) {
+                        for ($i = 0; $i < count($fed_mst_count); $i++) {
+                            $fed_mst = new Preanalytics();
+                            $fed_mst->task = $request->post('task_fd');
+                            $fed_mst->assignment_id = $fed_mst_count[$i];
+                            $fed_mst->assignment_type = "FD";
+                            $fed_mst->asgtkn = assignToken();
+                            $fed_mst->user_id = $request->post('user_id');
+                            $fed_mst->remark = $request->post('remark');
+                            $fed_mst->created_by = $user->id;
+                            $result = $fed_mst->save();
+
+                            // notification
+                            $id = $fed_mst->assignment_id;
+                            $query="SELECT name_of_federation FROM federation_profile WHERE is_deleted = 0 AND federation_sub_mst_id = $id";
+                            $fed_name =DB::select($query)[0]->name_of_federation; 
+                            
+                            $asgtkn = $fed_mst->asgtkn;
+                            $user_id = $fed_mst->created_by;
+                            $mst_id = $fed_mst->assignment_id;
+                            $assignment_type = $fed_mst->assignment_type;
+                            $task = $fed_mst->task;
+                            $task_a1 = 'N/A';
+                            $manager_id = $fed_mst->user_id;
+                            $user_name = User::where('id', '=', $user_id)->pluck('name')->toArray();
+                            $fac_name = User::where('id', '=', $manager_id)->pluck('name')->toArray();
+                            
+                            
+                            
+                            $message['task'] = "Federation";
+                            $message['status'] = "A";
+                            $message['manager_name'] = $user_name[0]; 
+                            $message['name'] = $fed_name;
+                            $message['user_name'] = $fac_name[0];
+                            $message_save='';
+                            $message_save = "$user_name[0]  has assigned $fed_name task for Federation to $fac_name[0] Facilitator.";
+                            notification($asgtkn, $mst_id, $assignment_type, $task, $task_a1, $user_id, $manager_id, $message,$message_save);
+
+                            if ($request->post('task_fd') == 'A') {
+                                $cureent_status = 'AP';
+                                $query = "UPDATE federation_sub_mst set cureent_status = '$cureent_status', dm_a='N' WHERE federation_mst_id=$fed_mst_count[$i] AND status='A' ";
+
+                                DB::update($query);
+                            }
+                            if ($request->post('task_fd') == 'R') {
+                                $cureent_status = 'RP';
+                                $query = "UPDATE federation_sub_mst set cureent_status= '$cureent_status', dm_r='N' WHERE federation_mst_id=$fed_mst_count[$i] AND status='A' ";
+                                DB::update($query);
+                            }
+                        }
+                    }
+
+                    //cluster save
+                    if (!empty($cl_mst_count)) {
+                        for ($i = 0; $i < count($cl_mst_count); $i++) {
+                            $cl_mst = new Preanalytics();
+                            $cl_mst->task = $request->post('task_cl');
+                            $cl_mst->assignment_id = $cl_mst_count[$i];
+                            $cl_mst->assignment_type = "CL";
+                            $cl_mst->asgtkn = assignToken();
+                            $cl_mst->user_id = $request->post('user_id');
+                            $cl_mst->remark = $request->post('remark');
+                            $cl_mst->created_by = $user->id;
+
+                            $result = $cl_mst->save();
+
+                            // notification
+                            $id = $cl_mst->assignment_id;
+                            $query="SELECT name_of_cluster FROM cluster_profile WHERE is_deleted = 0 AND cluster_sub_mst_id = $id";
+                            $clus_name = DB::select($query)[0]->name_of_cluster;
+                           
+                            $asgtkn = $cl_mst->asgtkn;
+                            $user_id = $cl_mst->created_by;
+                            $mst_id = $cl_mst->assignment_id;
+                            $assignment_type = $cl_mst->assignment_type;
+                            $task = $cl_mst->task;
+                            $task_a1 = 'N/A';
+                            $manager_id = $cl_mst->user_id;
+                            $user_name = User::where('id', '=', $user_id)->pluck('name')->toArray();
+                            $fac_name = User::where('id', '=', $manager_id)->pluck('name')->toArray();
+                            
+                            $message['task'] = "Cluster";
+                            $message['status'] = "A";
+                            $message['manager_name'] = $user_name[0]; 
+                            $message['name'] = $clus_name;
+                            $message['user_name'] = $fac_name[0];
+                            $message_save='';
+                            $message_save = "$user_name[0]  has assigned $clus_name task for Cluster to $fac_name[0] Facilitator.";
+
+                            notification($asgtkn, $mst_id, $assignment_type, $task, $task_a1, $user_id, $manager_id, $message,$message_save);
+
+                            if ($request->post('task_cl') == 'A') {
+                                $cureent_status = 'AP';
+                                $query = "UPDATE cluster_sub_mst set cureent_status= '$cureent_status', dm_a='N' WHERE cluster_mst_id=$cl_mst_count[$i] AND status='A'";
+                                DB::update($query);
+                            }
+                            if ($request->post('task_cl') == 'R') {
+                                $cureent_status = 'RP';
+                                $query = "UPDATE cluster_sub_mst set cureent_status= '$cureent_status', dm_r='N' WHERE cluster_mst_id=$cl_mst_count[$i] AND status='A'";
+                                DB::update($query);
+                            }
+                        }
+                    }
+
+                    //SHG save
+                    if (!empty($sh_mst_count)) {
+                        for ($i = 0; $i < count($sh_mst_count); $i++) {
+                            $shg_mst = new Preanalytics();
+                            $shg_mst->task = $request->post('task_sh');
+                            $shg_mst->assignment_id = $sh_mst_count[$i];
+                            $shg_mst->assignment_type = "SH";
+                            $shg_mst->asgtkn = assignToken();
+                            $shg_mst->user_id = $request->post('user_id');
+                            $shg_mst->remark = $request->post('remark');
+                            $shg_mst->created_by = $user->id;
+
+                            $result = $shg_mst->save();
+                           
+                            // notification
+                            $id = $shg_mst->assignment_id;
+                            $query="SELECT shgName FROM shg_profile WHERE is_deleted = 0 AND shg_sub_mst_id = $id";
+                            $shg_name = DB::select($query)[0]->shgName;
+                            $asgtkn = $shg_mst->asgtkn;
+                            $user_id = $shg_mst->created_by;
+                            $mst_id = $shg_mst->assignment_id;
+                            $assignment_type = $shg_mst->assignment_type;
+                            $task = $shg_mst->task;
+                            $task_a1 = 'N/A';
+                            $manager_id = $shg_mst->user_id;
+                            $user_name = User::where('id', '=', $user_id)->pluck('name')->toArray();
+                            $fac_name = User::where('id', '=', $manager_id)->pluck('name')->toArray();
+                            $message['task'] = "SHG";
+                            $message['status'] = "A";
+                            $message['manager_name'] = $user_name[0]; 
+                            $message['name'] = $shg_name;
+                            $message['user_name'] = $fac_name[0];
+                            $message_save='';
+                            $message_save = "$user_name[0]  has assigned $shg_name task for SHG to $fac_name[0] Facilitator.";
+
+                            notification($asgtkn, $mst_id, $assignment_type, $task, $task_a1, $user_id, $manager_id, $message,$message_save);
+
+                            
+                            if ($request->post('task_sh') == 'A') {
+                                $cureent_status = 'AP';
+                                $query = "UPDATE shg_sub_mst set cureent_status= '$cureent_status', dm_a='N' WHERE shg_mst_id=$sh_mst_count[$i] AND status='A'";
+                                DB::update($query);
+                            }
+                            if ($request->post('task_sh') == 'R') {
+                                $cureent_status = 'RP';
+                                $query = "UPDATE shg_sub_mst set cureent_status= '$cureent_status', dm_r='N' WHERE shg_mst_id=$sh_mst_count[$i] AND status='A'";
+                                DB::update($query);
+                            }
+                        }
+                    }
+
+                    //Family save
+                    // if (!empty($fm_mst_count)) {
+                    //     for ($i = 0; $i < count($fm_mst_count); $i++) {
+                    //         $fm_mst = new Preanalytics();
+                    //         $fm_task = $request->post('task_fm');
+                    //         if ($fm_task == 'R') {
+                    //             $task = $fm_task;
+                    //             $task_a1 = 'N/A';
+                    //         } else {
+                    //             $task = 'A';
+                    //             $task_a1 = $request->post('task_fm');
+                    //         }
+
+                    //         $fm_mst->assignment_id = $fm_mst_count[$i];
+                    //         $fm_mst->assignment_type = "FM";
+                    //         $fm_mst->task = $task;
+                    //         $fm_mst->task_a1 = $task_a1;
+                    //         $fm_mst->asgtkn = assignToken();
+                    //         $fm_mst->user_id = $request->post('user_id');
+                    //         $fm_mst->remark = $request->post('remark');
+                    //         $fm_mst->created_by = $user->id;
+
+                    //         $result = $fm_mst->save();
+
+                    //         // notification
+                    //         $id = $fm_mst->assignment_id;
+                    //         $query="SELECT fp_member_name FROM family_profile WHERE is_deleted = 0 AND family_sub_mst_id = $id";
+                    //         $fm_name = DB::select($query)[0]->fp_member_name;
+                            
+                    //         $asgtkn = $fm_mst->asgtkn;
+                    //         $user_id = $fm_mst->created_by;
+                    //         $mst_id = $fm_mst->assignment_id;
+                    //         $assignment_type = $fm_mst->assignment_type;
+                    //         $task = $fm_mst->task;
+                    //         $task_a1 = $fm_mst->task_a1;
+                    //         $manager_id = $fm_mst->user_id;
+                    //         $user_name = User::where('id', '=', $user_id)->pluck('name')->toArray();
+                    //         $fac_name = User::where('id', '=', $manager_id)->pluck('name')->toArray();
+                    //         $message['task'] = "Family";
+                    //         $message['status'] = "A";
+                    //         $message['manager_name'] = $user_name[0]; 
+                    //         $message['name'] = $fm_name;
+                    //         $message['user_name'] = $fac_name[0];
+                    //         $message_save='';
+                    //         $message_save = "$user_name[0]  has assigned $fm_name task for Family to $fac_name[0] Facilitator.";
+                    //         notification($asgtkn, $mst_id, $assignment_type, $task, $task_a1, $user_id, $manager_id, $message,$message_save);
+
+                    //         if ($task == 'A' && $task_a1 == 'P1') {
+                    //             $cureent_status = 'AP';
+                    //             $query = "UPDATE family_sub_mst set cureent_status= '$cureent_status', dm_p1='N' WHERE family_mst_id=$fm_mst_count[$i] AND status='A'";
+                    //             DB::update($query);
+                    //         }
+                    //         if ($task == 'A' && $task_a1 == 'P2') {
+                    //             $cureent_status = 'AP';
+                    //             $query = "UPDATE family_sub_mst set cureent_status= '$cureent_status', dm_p2='N' WHERE family_mst_id=$fm_mst_count[$i] AND status='A'";
+                    //             DB::update($query);
+                    //         }
+                    //         if ($task == 'R') {
+                    //             $cureent_status = 'RP';
+                    //             $query = "UPDATE family_sub_mst set cureent_status= '$cureent_status', dm_r='N' WHERE family_mst_id=$fm_mst_count[$i] AND status='A'";
+                    //             DB::update($query);
+                    //         }
+                    //     }
+                    // }
+                   
+                    // family p1 save
+                    if (!empty($fm1_mst_count)) {
+                        for ($i = 0; $i < count($fm1_mst_count); $i++) {
+                            $fm_mst = new Preanalytics();
+                            $task = 'A';
+                            $task_a1 = $request->post('task_fm1');
+                            
+
+                            $fm_mst->assignment_id = $fm1_mst_count[$i];
+                            $fm_mst->assignment_type = "FM";
+                            $fm_mst->task = $task;
+                            $fm_mst->task_a1 = $task_a1;
+                            $fm_mst->asgtkn = assignToken();
+                            $fm_mst->user_id = $request->post('user_id');
+                            $fm_mst->remark = $request->post('remark');
+                            $fm_mst->created_by = $user->id;
+
+                            $result = $fm_mst->save();
+
+                            // notification
+                            $id = $fm_mst->assignment_id;
+                            $query="SELECT fp_member_name FROM family_profile WHERE is_deleted = 0 AND family_sub_mst_id = $id";
+                            $fm_name = DB::select($query)[0]->fp_member_name;
+                            
+                            $asgtkn = $fm_mst->asgtkn;
+                            $user_id = $fm_mst->created_by;
+                            $mst_id = $fm_mst->assignment_id;
+                            $assignment_type = $fm_mst->assignment_type;
+                            $task = $fm_mst->task;
+                            $task_a1 = $fm_mst->task_a1;
+                            $manager_id = $fm_mst->user_id;
+                            $user_name = User::where('id', '=', $user_id)->pluck('name')->toArray();
+                            $fac_name = User::where('id', '=', $manager_id)->pluck('name')->toArray();
+                            $message['task'] = "Family";
+                            $message['status'] = "A";
+                            $message['manager_name'] = $user_name[0]; 
+                            $message['name'] = $fm_name;
+                            $message['user_name'] = $fac_name[0];
+                            $message_save='';
+                            $message_save = "$user_name[0]  has assigned $fm_name task for Family to $fac_name[0] Facilitator.";
+                            notification($asgtkn, $mst_id, $assignment_type, $task, $task_a1, $user_id, $manager_id, $message,$message_save);
+                            $cureent_status = 'AP';
+                            $query = "UPDATE family_sub_mst set cureent_status= '$cureent_status', dm_p1='N',task_status=0 WHERE family_mst_id=$fm1_mst_count[$i] AND status='A'";
+                            DB::update($query);
+                            
+                            
+                        }
+                    }
+
+                    // family p2 save
+                    if (!empty($fm2_mst_count)) {
+                        for ($i = 0; $i < count($fm2_mst_count); $i++) {
+                            $fm_mst = new Preanalytics();
+                            $task = 'A';
+                            $task_a1 = $request->post('task_fm2');
+                            
+
+                            $fm_mst->assignment_id = $fm2_mst_count[$i];
+                            $fm_mst->assignment_type = "FM";
+                            $fm_mst->task = $task;
+                            $fm_mst->task_a1 = $task_a1;
+                            $fm_mst->asgtkn = assignToken();
+                            $fm_mst->user_id = $request->post('user_id');
+                            $fm_mst->remark = $request->post('remark');
+                            $fm_mst->created_by = $user->id;
+
+                            $result = $fm_mst->save();
+
+                            // notification
+                            $id = $fm_mst->assignment_id;
+                            $query="SELECT fp_member_name FROM family_profile WHERE is_deleted = 0 AND family_sub_mst_id = $id";
+                            $fm_name = DB::select($query)[0]->fp_member_name;
+                            
+                            $asgtkn = $fm_mst->asgtkn;
+                            $user_id = $fm_mst->created_by;
+                            $mst_id = $fm_mst->assignment_id;
+                            $assignment_type = $fm_mst->assignment_type;
+                            $task = $fm_mst->task;
+                            $task_a1 = $fm_mst->task_a1;
+                            $manager_id = $fm_mst->user_id;
+                            $user_name = User::where('id', '=', $user_id)->pluck('name')->toArray();
+                            $fac_name = User::where('id', '=', $manager_id)->pluck('name')->toArray();
+                            $message['task'] = "Family";
+                            $message['status'] = "A";
+                            $message['manager_name'] = $user_name[0]; 
+                            $message['name'] = $fm_name;
+                            $message['user_name'] = $fac_name[0];
+                            $message_save='';
+                            $message_save = "$user_name[0]  has assigned $fm_name task for Family to $fac_name[0] Facilitator.";
+                            notification($asgtkn, $mst_id, $assignment_type, $task, $task_a1, $user_id, $manager_id, $message,$message_save);
+                          
+
+                            $cureent_status = 'AP';
+                                $query = "UPDATE family_sub_mst set cureent_status= '$cureent_status', dm_p2='N',task_status=0 WHERE family_mst_id=$fm2_mst_count[$i] AND status='A'";
+                                DB::update($query);
+                            
+                            
+                        }
+                    }
+
+                    // family rating save
+                    if (!empty($fmr_mst_count)) {
+                        for ($i = 0; $i < count($fmr_mst_count); $i++) {
+                            $fm_mst = new Preanalytics();
+                            $task = 'R';
+                            $task_a1 = $request->post('task_fmr');
+                            
+
+                            $fm_mst->assignment_id = $fmr_mst_count[$i];
+                            $fm_mst->assignment_type = "FM";
+                            $fm_mst->task = $task;
+                            $fm_mst->task_a1 = $task_a1;
+                            $fm_mst->asgtkn = assignToken();
+                            $fm_mst->user_id = $request->post('user_id');
+                            $fm_mst->remark = $request->post('remark');
+                            $fm_mst->created_by = $user->id;
+
+                            $result = $fm_mst->save();
+
+                            // notification
+                            $id = $fm_mst->assignment_id;
+                            $query="SELECT fp_member_name FROM family_profile WHERE is_deleted = 0 AND family_sub_mst_id = $id";
+                            $fm_name = DB::select($query)[0]->fp_member_name;
+                            
+                            $asgtkn = $fm_mst->asgtkn;
+                            $user_id = $fm_mst->created_by;
+                            $mst_id = $fm_mst->assignment_id;
+                            $assignment_type = $fm_mst->assignment_type;
+                            $task = $fm_mst->task;
+                            $task_a1 = $fm_mst->task_a1;
+                            $manager_id = $fm_mst->user_id;
+                            $user_name = User::where('id', '=', $user_id)->pluck('name')->toArray();
+                            $fac_name = User::where('id', '=', $manager_id)->pluck('name')->toArray();
+                            $message['task'] = "Family";
+                            $message['status'] = "A";
+                            $message['manager_name'] = $user_name[0]; 
+                            $message['name'] = $fm_name;
+                            $message['user_name'] = $fac_name[0];
+                            $message_save='';
+                            $message_save = "$user_name[0]  has assigned $fm_name task for Family to $fac_name[0] Facilitator.";
+                            notification($asgtkn, $mst_id, $assignment_type, $task, $task_a1, $user_id, $manager_id, $message,$message_save);
+                           
+
+                            $cureent_status = 'RP';
+                                $query = "UPDATE family_sub_mst set cureent_status= '$cureent_status', dm_r='N' WHERE family_mst_id=$fmr_mst_count[$i] AND status='A'";
+                                DB::update($query);
+                            
+                            
+                        }
+                    }
+
+                    if ($result) {
+                        return true;
+                    }
+                });
+                if ($result) {
+                    return redirect('preanalytics')->with(['message' => 'Task Assigned successfully.']);
+                }
+            } catch (\Exception $e) {
+                prd($e->getMessage());
+                return redirect()->back()->withErrors(['error' => $e->getMessage()])->withInput();
+            }
+        }
+        $data = [];
+        $data['agency'] = DB::table('agency')
+                ->where('is_deleted', '=', 0)
+                ->get()->toArray();
+        $data['facilitator_list'] = $this->facilitator_list();
+
+        return view($view)->with($data);
+    }
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create(Request $request)
+    {
+        $data = [];
+        if ($request->ajax()) {
+            $start = (int)$request->post('start');
+            $limit = (int)$request->post('length');
+            $txt_search = $request->post('search')['value'];
+            DB::enableQueryLog();
+            $query = DB::table('task_assignment as y')
+                ->join('family_mst as k', 'k.id', '=', 'y.assignment_id')
+                ->join('family_sub_mst as m', 'm.family_mst_id', '=', 'k.id')
+                ->join('family_profile as l', 'l.family_sub_mst_id', '=', 'm.id')
+                ->join('shg_mst as i', 'i.uin', '=', 'k.shg_uin')
+                ->join('shg_sub_mst as n', 'i.id', '=', 'n.shg_mst_id')
+                ->join('shg_profile as j', 'j.shg_sub_mst_id', '=', 'n.id')
+                ->join('agency as d', 'k.agency_id', '=', 'd.agency_id')
+                ->join('users as e', 'y.user_id', '=', 'e.id')
+
+                ->select('y.*', 'd.agency_name', 'j.shgName', 'e.name', 'k.uin', 'l.fp_member_name','l.fp_member_name');
+            if ($txt_search != '') {
+                $query->Where(function ($query) use ($txt_search) {
+                    $query->orwhere('k.uin', 'like', '%' . $txt_search . '%')
+                    ->orwhere('l.fp_member_name', 'like', '%' . $txt_search . '%')
+                    ->orwhere('e.name', 'like', '%' . $txt_search . '%')
+                    ->orwhere('j.shgName', 'like', '%' . $txt_search . '%');
+                        
+                });
+            }
+            $query->where('y.is_deleted', '=', 0)->where('y.assignment_type', '=', 'FM')->where('y.status', '=', 'P');
+            $total = $query->count();
+            $familys = $query->orderBy('y.id', 'DESC')
+                ->limit($limit)
+                ->offset($start)
+                ->get()->toArray();
+            $query = DB::getQueryLog();
+            foreach ($familys as $family) {
+                $action =  '<span class="dropdown-item"><span class="badge badge-primary">Completed</span></span>';
+                if ($family->status == 'P') {
+                    $action = '<span class="dropdown-item getdetail" data-id="' . $family->id . '" data-toggle="modal" data-target="#myModal" style="cursor:pointer"><span class="badge badge-warning">Reject</span></a></span>';
+                    $status = '<span style="color:#ff5722">Pending</span>';
+                }
+             
+                elseif ($family->status == 'D') {
+                    $status = '<span style="color:green">Done</span>';
+                } elseif ($family->status == 'R') {
+                    $status = '<span style="color:Red">Reject</span>';
+                } else {
+                    $status = '<span style="color:Pink">Progress</span>';
+                }
+
+                if ($family->task == 'A') {
+                    $task = '<span style="color:green">Analysis - ' . $family->task_a1 . '</span>';
+                } elseif ($family->task == 'R') {
+                    $task = '<span style="color:green">Rating</span>';
+                }
+
+                $row = [];
+                $row[] = ++$start;
+                $row[] = $family->uin;
+                $row[] = $family->fp_member_name;
+                $row[] = $family->shgName;
+                $row[] = $family->name;
+
+                $row[] = $task;
+                $row[] = $status;
+                $row[] =change_date_month_name_char($family->created_at);
+                $row[] =change_date_month_name_char($family->updated_at);
+                $row[] = $action;
+                $btns = '';
+
+                /*$btns .= '<a class="btagencyn btn-primary btn-link btn-sm" rel="tooltip" title="Edit" data-original-title="Edit" href="'. route('preanalytics.edit', $family->id).'" style="padding:0px;margin:0px"><i class="c-white-500 ti-pencil"></i></a>';
+                $btns .= ' <a href="javascript:;" class="btn btn-danger btn-link btn-sm" rel="tooltip" title="Remove" onclick="fn_delete(\'' . $family->id . '\')" title="Delete User"  style="padding:0px;margin:0px"><i class="c-white-500 ti-trash"></i></a>';*/
+
+                $row[] = $btns;
+                $data[] = $row;
+            }
+
+            $output = array(
+                "draw"            => $request->post('draw'),
+                "recordsTotal"    => $total,
+                "recordsFiltered" => $total,
+                "data"            => $data,
+            );
+            echo json_encode($output);
+            exit;
+        }
+        return view('preanalytics.add')->with($data);
+    }
+    public function family_pre_task(Request $request)
+    {
+        $data = [];
+        if ($request->ajax()) {
+            $start = (int)$request->post('start');
+            $limit = (int)$request->post('length');
+            $txt_search = $request->post('search')['value'];
+            DB::enableQueryLog();
+            $query = DB::table('task_assignment as y')
+                ->join('family_mst as k', 'k.id', '=', 'y.assignment_id')
+                ->join('family_sub_mst as m', 'm.family_mst_id', '=', 'k.id')
+                ->join('family_profile as l', 'l.family_sub_mst_id', '=', 'm.id')
+                ->join('shg_mst as i', 'i.uin', '=', 'k.shg_uin')
+                ->join('shg_sub_mst as n', 'i.id', '=', 'n.shg_mst_id')
+                ->join('shg_profile as j', 'j.shg_sub_mst_id', '=', 'n.id')
+                ->join('agency as d', 'k.agency_id', '=', 'd.agency_id')
+                ->join('users as e', 'y.user_id', '=', 'e.id')
+
+                ->select('y.*', 'd.agency_name', 'j.shgName', 'e.name', 'k.uin', 'l.fp_member_name');
+            if ($txt_search != '') {
+                $query->Where(function ($query) use ($txt_search) {
+                    $query->orwhere('k.uin', 'like', '%' . $txt_search . '%')
+                    ->orwhere('l.fp_member_name', 'like', '%' . $txt_search . '%')
+                    ->orwhere('e.name', 'like', '%' . $txt_search . '%')
+                    ->orwhere('j.shgName', 'like', '%' . $txt_search . '%');
+                });
+            }
+            $query->where('y.is_deleted', '=', 0)->where('y.assignment_type', '=', 'FM')->where('y.status', '=', 'D');
+            $total = $query->count();
+            $familys = $query->orderBy('y.id', 'DESC')
+                ->limit($limit)
+                ->offset($start)
+                ->get()->toArray();
+            $query = DB::getQueryLog();
+            //prd($query);
+            foreach ($familys as $family) {
+                $action =  '<span class="dropdown-item"><span class="badge badge-primary">Completed</span></span>';
+                if ($family->status == 'P') {
+                    $action = '<span class="dropdown-item getdetail" data-id="' . $family->id . '" data-toggle="modal" data-target="#myModal" style="cursor:pointer"><span class="badge badge-warning">Reject</span></a></span>';
+                    $status = '<span style="color:#ff5722">Pending</span>';
+                }
+                
+                elseif ($family->status == 'D') {
+                    $status = '<span style="color:green">Done</span>';
+                } elseif ($family->status == 'R') {
+                    $status = '<span style="color:Red">Reject</span>';
+                } else {
+                    $status = '<span style="color:Pink">Progress</span>';
+                }
+
+                if ($family->task == 'A') {
+                    $task = '<span style="color:green">Analysis - ' . $family->task_a1 . '</span>';
+                } elseif ($family->task == 'R') {
+                    $task = '<span style="color:green">Rating</span>';
+                }
+
+                $row = [];
+                $row[] = ++$start;
+                $row[] = $family->uin;
+                $row[] = $family->fp_member_name;
+                $row[] = $family->shgName;
+                $row[] = $family->name;
+
+                $row[] = $task;
+                $row[] = $status;
+                $row[] =change_date_month_name_char($family->created_at);
+                $row[] =change_date_month_name_char($family->updated_at);
+                $row[] = $action;
+                $btns = '';
+
+                /*$btns .= '<a class="btagencyn btn-primary btn-link btn-sm" rel="tooltip" title="Edit" data-original-title="Edit" href="'. route('preanalytics.edit', $family->id).'" style="padding:0px;margin:0px"><i class="c-white-500 ti-pencil"></i></a>';
+                $btns .= ' <a href="javascript:;" class="btn btn-danger btn-link btn-sm" rel="tooltip" title="Remove" onclick="fn_delete(\'' . $family->id . '\')" title="Delete User"  style="padding:0px;margin:0px"><i class="c-white-500 ti-trash"></i></a>';*/
+
+                $row[] = $btns;
+                $data[] = $row;
+            }
+
+            $output = array(
+                "draw"            => $request->post('draw'),
+                "recordsTotal"    => $total,
+                "recordsFiltered" => $total,
+                "data"            => $data,
+            );
+            echo json_encode($output);
+            exit;
+        }
+        return view('preanalytics.add')->with($data);
+    }
+    public function shg_task(Request $request)
+    {
+        $data = [];
+        if ($request->ajax()) {
+            $start = (int)$request->post('start');
+            $limit = (int)$request->post('length');
+            $txt_search = $request->post('search')['value'];
+            DB::enableQueryLog();
+            $query = DB::table('task_assignment as y')
+                ->join('shg_mst as i', 'i.id', '=', 'y.assignment_id')
+                ->join('shg_sub_mst as m', 'i.id', '=', 'm.shg_mst_id')
+                ->join('shg_profile as j', 'j.shg_sub_mst_id', '=', 'm.id')
+                ->leftjoin('cluster_mst as k', 'k.uin', '=', 'i.cluster_uin')
+                ->leftjoin('cluster_sub_mst as n', 'k.id', '=', 'n.cluster_mst_id')
+                ->leftjoin('cluster_profile as l', 'l.cluster_sub_mst_id', '=', 'n.id')
+                ->join('agency as d', 'i.agency_id', '=', 'd.agency_id')
+                ->join('users as e', 'y.user_id', '=', 'e.id')
+
+                ->select('y.*', 'd.agency_name', 'j.shgName', 'e.name', 'i.uin', 'l.name_of_cluster');
+            if ($txt_search != '') {
+                $query->Where(function ($query) use ($txt_search) {
+                    $query->orwhere('i.uin', 'like', '%' . $txt_search . '%')
+                        ->orwhere('e.name', 'like', '%' . $txt_search . '%')
+                        ->orwhere('l.name_of_cluster', 'like', '%' . $txt_search . '%')
+                        ->orwhere('j.shgName', 'like', '%' . $txt_search . '%');
+                });
+            }
+            $query->where('y.is_deleted', '=', 0)->where('y.assignment_type', '=', 'SH')->where('y.status', '=', 'P');
+            $total = $query->count();
+            $familys = $query->orderBy('y.id', 'DESC')
+                ->limit($limit)
+                ->offset($start)
+                ->get()->toArray();
+            $query = DB::getQueryLog();
+            foreach ($familys as $family) {
+                $action =  '<span class="dropdown-item"><span class="badge badge-primary">Completed</span></span>';
+                if ($family->status == 'P') {
+                    $action = '<span class="dropdown-item getdetail" data-id="' . $family->id . '" data-toggle="modal" data-target="#myModal" style="cursor:pointer"><span class="badge badge-warning">Reject</span></a></span>';
+                    $status = '<span style="color:#ff5722">Pending</span>';
+                } elseif ($family->status == 'D') {
+                    $status = '<span style="color:green">Done</span>';
+                } elseif ($family->status == 'R') {
+                    $status = '<span style="color:Red">Reject</span>';
+                } else {
+                    $status = '<span style="color:Pink">Progress</span>';
+                }
+
+                if ($family->task == 'A') {
+                    $task = '<span style="color:green">Analysis</span>';
+                } elseif ($family->task == 'R') {
+                    $task = '<span style="color:green">Rating</span>';
+                }
+                $row = [];
+                $row[] = ++$start;
+                $row[] = $family->uin;
+                $row[] = $family->shgName;
+                $row[] = $family->name_of_cluster;
+                $row[] = $family->name;
+
+                $row[] = $task;
+                $row[] = $status;
+                $row[] =change_date_month_name_char($family->created_at);
+                $row[] =change_date_month_name_char($family->updated_at);
+                
+                $row[] = $action;
+                $btns = '';
+
+                /*$btns .= '<a class="btagencyn btn-primary btn-link btn-sm" rel="tooltip" title="Edit" data-original-title="Edit" href="'. route('preanalytics.edit', $family->id).'" style="padding:0px;margin:0px"><i class="c-white-500 ti-pencil"></i></a>';
+                $btns .= ' <a href="javascript:;" class="btn btn-danger btn-link btn-sm" rel="tooltip" title="Remove" onclick="fn_delete(\'' . $family->id . '\')" title="Delete User"  style="padding:0px;margin:0px"><i class="c-white-500 ti-trash"></i></a>';*/
+
+                $row[] = $btns;
+                $data[] = $row;
+            }
+
+            $output = array(
+                "draw"            => $request->post('draw'),
+                "recordsTotal"    => $total,
+                "recordsFiltered" => $total,
+                "data"            => $data,
+            );
+            echo json_encode($output);
+            exit;
+        }
+        return view('preanalytics.list_shg')->with($data);
+    }
+    public function shg_pre_task(Request $request)
+    {
+        $data = [];
+        if ($request->ajax()) {
+            $start = (int)$request->post('start');
+            $limit = (int)$request->post('length');
+            $txt_search = $request->post('search')['value'];
+            DB::enableQueryLog();
+            $query = DB::table('task_assignment as y')
+                ->join('shg_mst as i', 'i.id', '=', 'y.assignment_id')
+                ->join('shg_sub_mst as m', 'i.id', '=', 'm.shg_mst_id')
+                ->join('shg_profile as j', 'j.shg_sub_mst_id', '=', 'm.id')
+                ->leftjoin('cluster_mst as k', 'k.uin', '=', 'i.cluster_uin')
+                ->leftjoin('cluster_sub_mst as n', 'k.id', '=', 'n.cluster_mst_id')
+                ->leftjoin('cluster_profile as l', 'l.cluster_sub_mst_id', '=', 'n.id')
+                ->join('agency as d', 'i.agency_id', '=', 'd.agency_id')
+                ->join('users as e', 'y.user_id', '=', 'e.id')
+
+                ->select('y.*', 'd.agency_name', 'j.shgName', 'e.name', 'i.uin', 'l.name_of_cluster');
+            if ($txt_search != '') {
+                $query->Where(function ($query) use ($txt_search) {
+                    $query->orwhere('i.uin', 'like', '%' . $txt_search . '%')
+                    ->orwhere('e.name', 'like', '%' . $txt_search . '%')
+                    ->orwhere('l.name_of_cluster', 'like', '%' . $txt_search . '%')
+                    ->orwhere('j.shgName', 'like', '%' . $txt_search . '%');
+                });
+            }
+            $query->where('y.is_deleted', '=', 0)->where('y.assignment_type', '=', 'SH')->where('y.status', '=', 'D');
+            $total = $query->count();
+            $familys = $query->orderBy('y.id', 'DESC')
+                ->limit($limit)
+                ->offset($start)
+                ->get()->toArray();
+            $query = DB::getQueryLog();
+            foreach ($familys as $family) {
+                $action =  '<span class="dropdown-item"><span class="badge badge-primary">Completed</span></span>';
+                if ($family->status == 'P') {
+                    $action = '<span class="dropdown-item getdetail" data-id="' . $family->id . '" data-toggle="modal" data-target="#myModal" style="cursor:pointer"><span class="badge badge-warning">Reject</span></a></span>';
+                    $status = '<span style="color:#ff5722">Pending</span>';
+                } elseif ($family->status == 'D') {
+                    $status = '<span style="color:green">Done</span>';
+                } elseif ($family->status == 'R') {
+                    $status = '<span style="color:Red">Reject</span>';
+                } else {
+                    $status = '<span style="color:Pink">Progress</span>';
+                }
+
+                if ($family->task == 'A') {
+                    $task = '<span style="color:green">Analysis</span>';
+                } elseif ($family->task == 'R') {
+                    $task = '<span style="color:green">Rating</span>';
+                }
+                $row = [];
+                $row[] = ++$start;
+                $row[] = $family->uin;
+                $row[] = $family->shgName;
+                $row[] = $family->name_of_cluster;
+                $row[] = $family->name;
+
+                $row[] = $task;
+                $row[] = $status;
+                $row[] =change_date_month_name_char($family->created_at);
+                $row[] =change_date_month_name_char($family->updated_at);
+                
+                $row[] = $action;
+                $btns = '';
+
+                /*$btns .= '<a class="btagencyn btn-primary btn-link btn-sm" rel="tooltip" title="Edit" data-original-title="Edit" href="'. route('preanalytics.edit', $family->id).'" style="padding:0px;margin:0px"><i class="c-white-500 ti-pencil"></i></a>';
+                $btns .= ' <a href="javascript:;" class="btn btn-danger btn-link btn-sm" rel="tooltip" title="Remove" onclick="fn_delete(\'' . $family->id . '\')" title="Delete User"  style="padding:0px;margin:0px"><i class="c-white-500 ti-trash"></i></a>';*/
+
+                $row[] = $btns;
+                $data[] = $row;
+            }
+
+            $output = array(
+                "draw"            => $request->post('draw'),
+                "recordsTotal"    => $total,
+                "recordsFiltered" => $total,
+                "data"            => $data,
+            );
+            echo json_encode($output);
+            exit;
+        }
+        return view('preanalytics.list_shg')->with($data);
+    }
+    public function cluster_task(Request $request)
+    {
+        $data = [];
+        if ($request->ajax()) {
+            $start = (int)$request->post('start');
+            $limit = (int)$request->post('length');
+            $txt_search = $request->post('search')['value'];
+            DB::enableQueryLog();
+            $query = DB::table('task_assignment as y')
+                ->join('cluster_mst as k', 'k.id', '=', 'y.assignment_id')
+                ->join('cluster_sub_mst as m', 'k.id', '=', 'm.cluster_mst_id')
+                ->join('cluster_profile as l', 'l.cluster_sub_mst_id', '=', 'm.id')
+                ->join('federation_mst as i', 'i.uin', '=', 'k.federation_uin')
+                ->join('federation_sub_mst as n', 'i.id', '=', 'n.federation_mst_id')
+                ->join('federation_profile as j', 'j.federation_sub_mst_id', '=', 'n.id')
+                ->join('agency as d', 'k.agency_id', '=', 'd.agency_id')
+                ->join('users as e', 'y.user_id', '=', 'e.id')
+
+                ->select('y.*', 'd.agency_name', 'j.name_of_federation', 'e.name', 'k.uin', 'l.name_of_cluster');
+            if ($txt_search != '') {
+                $query->Where(function ($query) use ($txt_search) {
+                    $query->orwhere('k.uin', 'like', '%' . $txt_search . '%')
+                        ->orwhere('l.name_of_cluster', 'like', '%' . $txt_search . '%')
+                        ->orwhere('e.name', 'like', '%' . $txt_search . '%')
+                        ->orwhere('j.name_of_federation', 'like', '%' . $txt_search . '%');
+                });
+            }
+            $query->where('y.is_deleted', '=', 0)->where('y.assignment_type', '=', 'CL')->where('y.status', '=', 'P');
+            $total = $query->count();
+            $familys = $query->orderBy('y.id', 'DESC')
+                ->limit($limit)
+                ->offset($start)
+                ->get()->toArray();
+            $query = DB::getQueryLog();
+            foreach ($familys as $family) {
+                $action =  '<span class="dropdown-item"><span class="badge badge-primary">Completed</span></span>';
+                if ($family->status == 'P') {
+                    $action = '<span class="dropdown-item getdetail" data-id="' . $family->id . '" data-toggle="modal" data-target="#myModal" style="cursor:pointer"><span class="badge badge-warning">Reject</span></a></span>';
+                    $status = '<span style="color:#ff5722">Pending</span>';
+                } elseif ($family->status == 'D') {
+                    $status = '<span style="color:green">Done</span>';
+                } elseif ($family->status == 'R') {
+                    $status = '<span style="color:Red">Reject</span>';
+                } else {
+                    $status = '<span style="color:Pink">Progress</span>';
+                }
+
+                if ($family->task == 'A') {
+                    $task = '<span style="color:green">Analysis</span>';
+                } elseif ($family->task == 'R') {
+                    $task = '<span style="color:green">Rating</span>';
+                }
+
+                $row = [];
+                $row[] = ++$start;
+                $row[] = $family->uin;
+                $row[] = $family->name_of_cluster;
+                $row[] = $family->name_of_federation;
+                $row[] = $family->name;
+
+                $row[] = $task;
+                $row[] = $status;
+                $row[] =change_date_month_name_char($family->created_at);
+                $row[] =change_date_month_name_char($family->updated_at);
+                
+                $row[] = $action;
+                $btns = '';
+
+                /*$btns .= '<a class="btagencyn btn-primary btn-link btn-sm" rel="tooltip" title="Edit" data-original-title="Edit" href="'. route('preanalytics.edit', $family->id).'" style="padding:0px;margin:0px"><i class="c-white-500 ti-pencil"></i></a>';
+                $btns .= ' <a href="javascript:;" class="btn btn-danger btn-link btn-sm" rel="tooltip" title="Remove" onclick="fn_delete(\'' . $family->id . '\')" title="Delete User"  style="padding:0px;margin:0px"><i class="c-white-500 ti-trash"></i></a>';*/
+
+                $row[] = $btns;
+                $data[] = $row;
+            }
+
+            $output = array(
+                "draw"            => $request->post('draw'),
+                "recordsTotal"    => $total,
+                "recordsFiltered" => $total,
+                "data"            => $data,
+            );
+            echo json_encode($output);
+            exit;
+        }
+        return view('preanalytics.list_cluster')->with($data);
+    }
+    public function cluster_pre_task(Request $request)
+    {
+        $data = [];
+        if ($request->ajax()) {
+            $start = (int)$request->post('start');
+            $limit = (int)$request->post('length');
+            $txt_search = $request->post('search')['value'];
+            DB::enableQueryLog();
+            $query = DB::table('task_assignment as y')
+                ->join('cluster_mst as k', 'k.id', '=', 'y.assignment_id')
+                ->join('cluster_sub_mst as m', 'k.id', '=', 'm.cluster_mst_id')
+                ->join('cluster_profile as l', 'l.cluster_sub_mst_id', '=', 'm.id')
+                ->join('federation_mst as i', 'i.uin', '=', 'k.federation_uin')
+                ->join('federation_sub_mst as n', 'i.id', '=', 'n.federation_mst_id')
+                ->join('federation_profile as j', 'j.federation_sub_mst_id', '=', 'n.id')
+                ->join('agency as d', 'k.agency_id', '=', 'd.agency_id')
+                ->join('users as e', 'y.user_id', '=', 'e.id')
+
+                ->select('y.*', 'd.agency_name', 'j.name_of_federation', 'e.name', 'k.uin', 'l.name_of_cluster');
+            if ($txt_search != '') {
+                $query->Where(function ($query) use ($txt_search) {
+                    $query->orwhere('k.uin', 'like', '%' . $txt_search . '%')
+                        ->orwhere('l.name_of_cluster', 'like', '%' . $txt_search . '%')
+                        ->orwhere('e.name', 'like', '%' . $txt_search . '%')
+                        ->orwhere('j.name_of_federation', 'like', '%' . $txt_search . '%');
+                });
+            }
+            $query->where('y.is_deleted', '=', 0)->where('y.assignment_type', '=', 'CL')->where('y.status', '=', 'D');
+            $total = $query->count();
+            $familys = $query->orderBy('y.id', 'DESC')
+                ->limit($limit)
+                ->offset($start)
+                ->get()->toArray();
+            $query = DB::getQueryLog();
+            foreach ($familys as $family) {
+                $action =  '<span class="dropdown-item"><span class="badge badge-primary">Completed</span></span>';
+                if ($family->status == 'P') {
+                    $action = '<span class="dropdown-item getdetail" data-id="' . $family->id . '" data-toggle="modal" data-target="#myModal" style="cursor:pointer"><span class="badge badge-warning">Reject</span></a></span>';
+                    $status = '<span style="color:#ff5722">Pending</span>';
+                } elseif ($family->status == 'D') {
+                    $status = '<span style="color:green">Done</span>';
+                } elseif ($family->status == 'R') {
+                    $status = '<span style="color:Red">Reject</span>';
+                } else {
+                    $status = '<span style="color:Pink">Progress</span>';
+                }
+
+                if ($family->task == 'A') {
+                    $task = '<span style="color:green">Analysis</span>';
+                } elseif ($family->task == 'R') {
+                    $task = '<span style="color:green">Rating</span>';
+                }
+
+                $row = [];
+                $row[] = ++$start;
+                $row[] = $family->uin;
+                $row[] = $family->name_of_cluster;
+                $row[] = $family->name_of_federation;
+                $row[] = $family->name;
+
+                $row[] = $task;
+
+                $row[] = $status;
+                $row[] =change_date_month_name_char($family->created_at);
+                $row[] =change_date_month_name_char($family->updated_at);
+              
+                $row[] = $action;
+                $btns = '';
+
+                /*$btns .= '<a class="btagencyn btn-primary btn-link btn-sm" rel="tooltip" title="Edit" data-original-title="Edit" href="'. route('preanalytics.edit', $family->id).'" style="padding:0px;margin:0px"><i class="c-white-500 ti-pencil"></i></a>';
+                $btns .= ' <a href="javascript:;" class="btn btn-danger btn-link btn-sm" rel="tooltip" title="Remove" onclick="fn_delete(\'' . $family->id . '\')" title="Delete User"  style="padding:0px;margin:0px"><i class="c-white-500 ti-trash"></i></a>';*/
+
+                $row[] = $btns;
+                $data[] = $row;
+            }
+
+            $output = array(
+                "draw"            => $request->post('draw'),
+                "recordsTotal"    => $total,
+                "recordsFiltered" => $total,
+                "data"            => $data,
+            );
+            echo json_encode($output);
+            exit;
+        }
+        return view('preanalytics.list_cluster')->with($data);
+    }
+    public function federation_task(Request $request)
+    {
+        $data = [];
+        if ($request->ajax()) {
+            $start = (int)$request->post('start');
+            $limit = (int)$request->post('length');
+            $txt_search = $request->post('search')['value'];
+            DB::enableQueryLog();
+            $query = DB::table('task_assignment as y')
+                ->join('federation_mst as i', 'i.id', '=', 'y.assignment_id')
+                ->join('federation_sub_mst as k', 'i.id', '=', 'k.federation_mst_id')
+                ->join('federation_profile as j', 'j.federation_sub_mst_id', '=', 'k.id')
+                ->join('agency as d', 'i.agency_id', '=', 'd.agency_id')
+                ->join('users as e', 'y.user_id', '=', 'e.id')
+                ->select('y.*', 'd.agency_name', 'j.name_of_federation', 'e.name', 'i.uin');
+            if ($txt_search != '') {
+                $query->Where(function ($query) use ($txt_search) {
+                    $query->orwhere('i.uin', 'like', '%' . $txt_search . '%')
+                        ->orwhere('e.name', 'like', '%' . $txt_search . '%')
+                        ->orwhere('j.name_of_federation', 'like', '%' . $txt_search . '%');
+                });
+            }
+            $query->where('y.is_deleted', '=', 0)->where('y.assignment_type', '=', 'FD')->where('y.status', '=', 'P');
+            $total = $query->count();
+            $familys = $query->orderBy('y.id', 'DESC')
+                ->limit($limit)
+                ->offset($start)
+                ->get()->toArray();
+            $query = DB::getQueryLog();
+            foreach ($familys as $family) {
+                $action =  '<span class="dropdown-item"><span class="badge badge-primary">Completed</span></span>';
+                if ($family->status == 'P') {
+                    $action = '<span class="dropdown-item getdetail" data-id="' . $family->id . '" data-toggle="modal" data-target="#myModal" style="cursor:pointer"><span class="badge badge-warning">Reject</span></a></span>';
+                    $status = '<span style="color:#ff5722">Pending</span>';
+                } elseif ($family->status == 'D') {
+                    $status = '<span style="color:green">Done</span>';
+                } elseif ($family->status == 'R') {
+                    $status = '<span style="color:Red">Reject</span>';
+                } else {
+                    $status = '<span style="color:Pink">Progress</span>';
+                }
+
+                if ($family->task == 'A') {
+                    $task = '<span style="color:green">Analysis</span>';
+                } elseif ($family->task == 'R') {
+                    $task = '<span style="color:green">Rating</span>';
+                }
+                $row = [];
+                $row[] = ++$start;
+                $row[] = $family->uin;
+                $row[] = $family->name_of_federation;
+                $row[] = $family->name;
+                $row[] = $task;
+                $row[] = $status;
+                $row[] =change_date_month_name_char($family->created_at);
+                $row[] =change_date_month_name_char($family->updated_at);
+                
+                $row[] = $action;
+                $btns = '';
+
+                /*$btns .= '<a class="btagencyn btn-primary btn-link btn-sm" rel="tooltip" title="Edit" data-original-title="Edit" href="'. route('preanalytics.edit', $family->id).'" style="padding:0px;margin:0px"><i class="c-white-500 ti-pencil"></i></a>';
+                $btns .= ' <a href="javascript:;" class="btn btn-danger btn-link btn-sm" rel="tooltip" title="Remove" onclick="fn_delete(\'' . $family->id . '\')" title="Delete User"  style="padding:0px;margin:0px"><i class="c-white-500 ti-trash"></i></a>';*/
+
+                $row[] = $btns;
+                $data[] = $row;
+            }
+
+            $output = array(
+                "draw"            => $request->post('draw'),
+                "recordsTotal"    => $total,
+                "recordsFiltered" => $total,
+                "data"            => $data,
+            );
+            echo json_encode($output);
+            exit;
+        }
+        return view('preanalytics.list_federation')->with($data);
+    }
+    public function federation_pre_task(Request $request)
+    {
+        $data = [];
+        if ($request->ajax()) {
+            $start = (int)$request->post('start');
+            $limit = (int)$request->post('length');
+            $txt_search = $request->post('search')['value'];
+            DB::enableQueryLog();
+            $query = DB::table('task_assignment as y')
+                ->join('federation_mst as i', 'i.id', '=', 'y.assignment_id')
+                ->join('federation_sub_mst as k', 'i.id', '=', 'k.federation_mst_id')
+                ->join('federation_profile as j', 'j.federation_sub_mst_id', '=', 'k.id')
+                ->join('agency as d', 'i.agency_id', '=', 'd.agency_id')
+                ->join('users as e', 'y.user_id', '=', 'e.id')
+                ->select('y.*', 'd.agency_name', 'j.name_of_federation', 'e.name', 'i.uin');
+            if ($txt_search != '') {
+                $query->Where(function ($query) use ($txt_search) {
+                    $query->orwhere('i.uin', 'like', '%' . $txt_search . '%')
+                        ->orwhere('e.name', 'like', '%' . $txt_search . '%')
+                        ->orwhere('j.name_of_federation', 'like', '%' . $txt_search . '%');
+                });
+            }
+            $query->where('y.is_deleted', '=', 0)->where('y.assignment_type', '=', 'FD')->where('y.status', '=', 'D');
+            $total = $query->count();
+            $familys = $query->orderBy('y.id', 'DESC')
+                ->limit($limit)
+                ->offset($start)
+                ->get()->toArray();
+            $query = DB::getQueryLog();
+            foreach ($familys as $family) {
+                $action =  '<span class="dropdown-item"><span class="badge badge-primary">Completed</span></span>';
+                if ($family->status == 'P') {
+                    $action = '<span class="dropdown-item getdetail" data-id="' . $family->id . '" data-toggle="modal" data-target="#myModal" style="cursor:pointer"><span class="badge badge-warning">Reject</span></a></span>';
+                    $status = '<span style="color:#ff5722">Pending</span>';
+                } elseif ($family->status == 'D') {
+                    $status = '<span style="color:green">Done</span>';
+                } elseif ($family->status == 'R') {
+                    $status = '<span style="color:Red">Reject</span>';
+                } else {
+                    $status = '<span style="color:Pink">Progress</span>';
+                }
+
+                if ($family->task == 'A') {
+                    $task = '<span style="color:green">Analysis</span>';
+                } elseif ($family->task == 'R') {
+                    $task = '<span style="color:green">Rating</span>';
+                }
+                $row = [];
+                $row[] = ++$start;
+                $row[] = $family->uin;
+                $row[] = $family->name_of_federation;
+                $row[] = $family->name;
+                $row[] = $task;
+                $row[] = $status;
+                $row[] =change_date_month_name_char($family->created_at);
+                $row[] =change_date_month_name_char($family->updated_at);
+                $row[] = $action;
+                $btns = '';
+
+                /*$btns .= '<a class="btagencyn btn-primary btn-link btn-sm" rel="tooltip" title="Edit" data-original-title="Edit" href="'. route('preanalytics.edit', $family->id).'" style="padding:0px;margin:0px"><i class="c-white-500 ti-pencil"></i></a>';
+                $btns .= ' <a href="javascript:;" class="btn btn-danger btn-link btn-sm" rel="tooltip" title="Remove" onclick="fn_delete(\'' . $family->id . '\')" title="Delete User"  style="padding:0px;margin:0px"><i class="c-white-500 ti-trash"></i></a>';*/
+
+                $row[] = $btns;
+                $data[] = $row;
+            }
+
+            $output = array(
+                "draw"            => $request->post('draw'),
+                "recordsTotal"    => $total,
+                "recordsFiltered" => $total,
+                "data"            => $data,
+            );
+            echo json_encode($output);
+            exit;
+        }
+        return view('preanalytics.list_federation')->with($data);
+    }
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+   
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    
+    
+   
+    
+    
+   
+
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\Preanalytics  $preanalytics
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Preanalytics $preanalytics)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Models\Preanalytics  $preanalytics
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($id)
+    {
+        if ($id > 0) {
+            $query = "SELECT
+                    Y.id,
+                    Y.user_id,
+                    Y.assignment_id,
+                    Y.remark,
+                    Y.task,
+                    Y.task_a1,
+                    k.id as family_id,
+                    l.fp_member_name,
+                    d.id as agency_id,
+                    i.id as shg_id,
+                    j.shgName,
+                    e.name
+                FROM
+                    task_assignment AS Y
+                INNER JOIN family_mst AS k
+                ON
+                    k.id = Y.assignment_id
+                INNER JOIN family_profile AS l
+                ON
+                    l.family_sub_mst_id = k.id
+                INNER JOIN shg_mst AS i
+                ON
+                    i.uin = k.shg_uin
+                INNER JOIN shg_profile AS j
+                ON
+                    j.shg_sub_mst_id = i.id
+                INNER JOIN agency AS d
+                ON
+                    k.agency_id = d.agency_id
+                INNER JOIN users AS e
+                ON
+                    Y.user_id = e.id
+                WHERE
+                    Y.is_deleted = 0 AND assignment_type = 'FM'";
+            $data['preanalytics'] = DB::select($query);
+
+            $data['edit'] = 1;
+            //prd($data);
+            $data['agency'] = DB::table('agency')
+                ->where('is_deleted', '=', 0)
+                ->get()->toArray();
+            return view('preanalytics.edit')->with($data);
+        } else {
+            return redirect('preanalytics');
+        }
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Preanalytics  $preanalytics
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, Preanalytics $preanalytics)
+    {
+        $view = 'preanalytics.edit';
+
+        /* Check post either add or update */
+        if ($request->isMethod('PATCH')) { 
+            try {
+                $result = DB::transaction(function () use ($request, $preanalytics) {
+                    $validation_arr = [
+                        'agency_id' => ['required'],
+                        'task' => ['required'],
+                        'task_a1' => ['required'],
+                        'shg_uin' => ['required'],
+                        'assignment_id' => ['required'],
+                        'user_id' => ['required'],
+                        'remark' => ['required'],
+                    ];
+
+                    $validator = Validator::make($request->all(), $validation_arr);
+                    if ($validator->fails()) {
+                        return redirect()->back()->withErrors($validator)->withInput();
+                    }
+
+                    $user = Auth::User();
+                    if ($request->post('id') > 0) {
+                        $family_mst = Preanalytics::find($request->post('id'));
+                        $family_mst->updated_by = $user->id;
+                    } else {
+                        return redirect('preanalytics')->with(['message' => 'Task id does not exist.']);
+                        exit();
+                    }
+                    $family_mst_count = $request->post('assignment_id');
+
+                    $result = $family_mst->save();
+
+                    if ($result) {
+                        return true;
+                    }
+                });
+                if ($result) {
+                    return redirect('family')->with(['message' => 'Family updated successfully.']);
+                }
+            } catch (\Exception $e) {
+                prd($e->getMessage());
+                return redirect()->back()->withErrors(['error' => $e->getMessage()])->withInput();
+            }
+        }
+
+        return view($view);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\Preanalytics  $preanalytics
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        try {
+            if ($id > 0) {
+                $task_details = Preanalytics::find($id);
+                $task_details->is_deleted = 1;
+                $task_details->save();
+
+                $data['message'] = 'Task deleted successfully';
+                echo json_encode($data);
+            } else {
+                $data['message'] = 'Invalid Request';
+                echo json_encode($data);
+            }
+        } catch (\Exception $e) {
+            print_r($e->getMessage());
+        }
+        exit;
+    }
+    public function change_task_status_fed(Request $request)
+    {
+        
+        $qastatus = $request->get('sts');
+        $remark = trim($request->get('rmk'));
+        $user = Auth::User();
+        $id = $request->get('id');
+
+        try {
+            if ($id > 0) {
+                $task_details = Preanalytics::find($id);
+                $task_details->status = $qastatus;
+                $task_details->remark = $remark;
+                $task_details->updated_at = date('Y-m-d H:i:s');
+                $task_details->save();
+                $type = $task_details->assignment_type;
+                $ass_id = $task_details->assignment_id;
+                $task_a = $task_details->task_a1;
+                
+                if ($type == 'FD') {
+                    DB::update('update federation_sub_mst set dm_a = ? where federation_mst_id = ?', ['',$ass_id]);
+                }
+                if ($type == 'CL') {
+                    DB::update('update cluster_sub_mst set dm_a = ? where cluster_mst_id = ?', ['',$ass_id]);
+                }
+                if ($type == 'SH') {
+                    DB::update('update shg_sub_mst set dm_a = ? where shg_mst_id = ?', ['',$ass_id]);
+                }
+                if ($type == 'FM') {
+                    if ($task_a == 'P1') {
+                        DB::update('update family_sub_mst set dm_p1 = ? where family_mst_id = ?', ['',$ass_id]);
+                    }
+                    if ($task_a == 'P2') {
+                        DB::update('update family_sub_mst set dm_p2 = ? where family_mst_id = ?', ['',$ass_id]);
+                    }
+                }
+
+                $data['message'] = 'Task Updated successfully';
+                $data['result'] = 1;
+                echo json_encode($data);
+            } else {
+                $data['message'] = 'Invalid Request';
+                $data['result'] = 0;
+                echo json_encode($data);
+            }
+        } catch (\Exception $e) {
+            print_r($e->getMessage());
+        }
+        exit;
+    }
+
+    public function qc_list()
+    {
+        $facilitator_list = DB::table('users as a')
+            ->where('a.is_deleted', '=', 0)
+            ->where('a.u_type', '=', 'QA')
+            ->select('a.id', 'a.name')
+            ->orderBy('a.name')
+            ->get()->toArray();
+
+        return $facilitator_list;
+    }
+
+    public function export_federation_list()
+    {
+        $data =[];
+
+     $query =  "SELECT
+                'Federation' AS TYPE,
+                i.uin,
+                j.name_of_federation,
+                d.agency_name,
+                e.name,
+                Y.status,
+                Y.created_at,
+                Y.updated_at,
+                Y.task
+            FROM
+                task_assignment AS Y
+            INNER JOIN federation_mst AS i
+            ON
+                i.id = Y.assignment_id
+            INNER JOIN federation_sub_mst AS k
+            ON
+                i.id = k.federation_mst_id
+            INNER JOIN federation_profile AS j
+            ON
+                j.federation_sub_mst_id = k.id
+            INNER JOIN agency AS d
+            ON
+                i.agency_id = d.agency_id
+            INNER JOIN users AS e
+            ON
+                Y.user_id = e.id
+            WHERE
+                Y.is_deleted = 0 AND Y.assignment_type = 'FD'";
+        $data['federation']=DB::select($query);        
+        view()->share('data', $data);
+        $pdf_doc = PDF::loadView('pdf.federationTasklistPdf', $data)->setPaper('a3', 'landscape');
+        return $pdf_doc->download('Federation_Task_List_'.pdf_date().'.pdf');
+    }
+
+    public function export_cluster_list()
+    {
+                $data =[];
+
+            $query =  "SELECT
+            'Cluster' AS TYPE,
+            k.uin,
+            l.name_of_cluster,
+            j.name_of_federation,
+            e.name,
+            d.agency_name,
+            Y.status,
+            Y.created_at,
+            Y.updated_at,
+            Y.task
+        FROM
+            task_assignment AS Y
+        INNER JOIN cluster_mst AS k
+        ON
+            k.id = Y.assignment_id
+        INNER JOIN cluster_sub_mst AS m
+        ON
+            k.id = m.cluster_mst_id
+        INNER JOIN cluster_profile AS l
+        ON
+            l.cluster_sub_mst_id = m.id
+        INNER JOIN federation_mst AS i
+        ON
+            i.uin = k.federation_uin
+        INNER JOIN federation_sub_mst AS n
+        ON
+            i.id = n.federation_mst_id
+        INNER JOIN federation_profile AS j
+        ON
+            j.federation_sub_mst_id = n.id
+        INNER JOIN agency AS d
+        ON
+            k.agency_id = d.agency_id
+        INNER JOIN users AS e
+        ON
+            Y.user_id = e.id
+        WHERE
+            Y.is_deleted = 0 AND Y.assignment_type = 'CL'";
+        $data['cluster']=DB::select($query);        
+        view()->share('data', $data);
+        $pdf_doc = PDF::loadView('pdf.clusterTasklistPdf', $data)->setPaper('a3', 'landscape');
+        return $pdf_doc->stream('Cluster_Task_List_'.pdf_date().'.pdf');
+    }
+
+    public function export_shg_list()
+    {
+        $data =[];
+
+            $query =  "SELECT
+            'SHG' AS TYPE,
+            i.uin,
+            j.shgName,
+            l.name_of_cluster,
+            jj.name_of_federation,
+            d.agency_name,
+            e.name,
+            Y.status,
+            Y.created_at,
+            Y.updated_at,
+            Y.task
+        FROM
+            task_assignment AS Y
+        INNER JOIN shg_mst AS i
+        ON
+            i.id = Y.assignment_id
+        INNER JOIN shg_sub_mst AS m
+        ON
+            i.id = m.shg_mst_id
+        INNER JOIN shg_profile AS j
+        ON
+            j.shg_sub_mst_id = m.id
+        LEFT JOIN cluster_mst AS k
+        ON
+            k.uin = i.cluster_uin
+        LEFT JOIN cluster_sub_mst AS n
+        ON
+            k.id = n.cluster_mst_id
+        LEFT JOIN cluster_profile AS l
+        ON
+            l.cluster_sub_mst_id = n.id
+        INNER JOIN federation_mst AS ii
+        ON
+            ii.uin = i.federation_uin
+        INNER JOIN federation_sub_mst AS nn
+        ON
+            ii.id = nn.federation_mst_id
+        INNER JOIN federation_profile AS jj
+        ON
+            jj.federation_sub_mst_id = nn.id
+        INNER JOIN agency AS d
+        ON
+            i.agency_id = d.agency_id
+        INNER JOIN users AS e
+        ON
+            Y.user_id = e.id
+        WHERE
+            Y.is_deleted = 0 AND Y.assignment_type = 'SH'";
+        $data['shg']=DB::select($query);        
+        view()->share('data', $data);
+        $pdf_doc = PDF::loadView('pdf.shgTasklistPdf', $data)->setPaper('a3', 'landscape');
+        return $pdf_doc->stream('SHG_Task_List_'.pdf_date().'.pdf');
+    }
+    public function export_family_list()
+    {
+        $data =[];
+
+            $query =  "SELECT
+            'Family' as TYPE,
+            k.uin,
+            l.fp_member_name,
+            j.shgName,
+            ll.name_of_cluster,
+            jj.name_of_federation,
+            d.agency_name,
+            e.name,
+            Y.status,
+            Y.created_at,
+            Y.updated_at,
+            Y.task,
+            Y.task_a1
+        FROM
+            task_assignment AS Y
+        INNER JOIN family_mst AS k
+        ON
+            k.id = Y.assignment_id
+        INNER JOIN family_sub_mst AS m
+        ON
+            m.family_mst_id = k.id
+        INNER JOIN family_profile AS l
+        ON
+            l.family_sub_mst_id = m.id
+        INNER JOIN shg_mst AS i
+        ON
+            i.uin = k.shg_uin
+        INNER JOIN shg_sub_mst AS n
+        ON
+            i.id = n.shg_mst_id
+        INNER JOIN shg_profile AS j
+        ON
+            j.shg_sub_mst_id = n.id
+        LEFT JOIN cluster_mst AS kk
+        ON
+            kk.uin = k.cluster_uin
+        LEFT JOIN cluster_sub_mst AS an
+        ON
+            kk.id = an.cluster_mst_id
+        LEFT JOIN cluster_profile AS ll
+        ON
+            ll.cluster_sub_mst_id = an.id
+        INNER JOIN federation_mst AS ii
+        ON
+            ii.uin = i.federation_uin
+        INNER JOIN federation_sub_mst AS nn
+        ON
+            ii.id = nn.federation_mst_id
+        INNER JOIN federation_profile AS jj
+        ON
+            jj.federation_sub_mst_id = nn.id
+        INNER JOIN agency AS d
+        ON
+            k.agency_id = d.agency_id
+        INNER JOIN users AS e
+        ON
+            Y.user_id = e.id
+        WHERE
+            Y.is_deleted = 0 AND Y.assignment_type = 'FM'";
+        $data['family']=DB::select($query);        
+        view()->share('data', $data);
+        $pdf_doc = PDF::loadView('pdf.familyTasklistPdf', $data)->setPaper('a3', 'landscape');
+        return $pdf_doc->stream('Family_Task_List_'.pdf_date().'.pdf');
+    }
+    public function export_federation(Request $request)
+    {
+        return Excel::download(new FederationTasklist(), 'FederationTasklist'.pdf_date().'.xlsx');
+    }
+    public function export_cluster(Request $request)
+    {
+        return Excel::download(new ClusterTasklist(), 'ClusterTasklist'.pdf_date().'.xlsx');
+    }
+    public function export_shg(Request $request)
+    {
+        return Excel::download(new ShgTasklist(), 'ShgTasklist'.pdf_date().'.xlsx');
+    }
+    public function export_family(Request $request)
+    {
+        return Excel::download(new FamilyTasklist(), 'FamilyTasklist'.pdf_date().'.xlsx');
+    }
+}

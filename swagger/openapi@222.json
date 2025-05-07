@@ -1,0 +1,471 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "WOTR FarmPrecise",
+    "description": "This is to share data of WOTR FarmPrecise application.",
+    "version": ""
+  },
+  "servers": [
+    {
+      "url": "http://localhost/wotr_fpo/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Login with JWT auth",
+      "description": ""
+    },
+    {
+      "name": "Master",
+      "description": ""
+    },
+    {
+      "name": "Pests and Diseases",
+      "description": ""
+    },
+    {
+      "name": "Fertilizer Calculator",
+      "description": ""
+    }
+  ],
+  "paths": {
+    "/Api_GoM/login": {
+      "post": {
+        "tags": [
+          "Login with JWT auth"
+        ],
+        "summary": "This API returns JWT Token and user details",
+        "description": "Return a Json array",
+        "operationId": "login",
+        "parameters": [
+          {
+            "name": "MobileNo",
+            "in": "query",
+            "description": "Enter Mobile No.",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Password",
+            "in": "query",
+            "description": "Enter Password",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getuser_data": {
+                    "value": "{\n  \"getuser_data\": {\n    \"UserID\": \"1\",\n    \"Username\": \"mwadmin\",\n    \"Password\": \"bcf6c9000f9e6bf972b2c7a8bfb27d05\",\n    \"MobileNo\": \"9871705804\",\n    \"IsActive\": \"0\",\n    \"CreatedOn\": \"2023-10-25 09:58:37\",\n    \"CreatedBy\": \"1\",\n    \"UpdatedOn\": null,\n    \"UpdatedBy\": null,\n    \"DefaultLanguage\": \"1\",\n    \"LastLoginTime\": \"2023-10-25 14:17:34\",\n    \"JWTToken\": \"99937293620231025141734\",\n    \"JWTExpiryDateTime\": \"2023-10-25 16:17:34\"\n  }\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Api_GoM/getLanguage": {
+      "post": {
+        "tags": [
+          "Master"
+        ],
+        "summary": "This API returns Language list and Language ID",
+        "description": "Return a Json array",
+        "operationId": "getLanguage",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getLanguage_data": {
+                    "value": "{\n  \"getLanguage_data\": [\n    {\n      \"ID\": \"1\",\n      \"Name\": \"English\",\n      \"IsActive\": \"1\"\n    }\n  ]\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Api_GoM/getCrops": {
+      "post": {
+        "tags": [
+          "Master"
+        ],
+        "summary": "This API returns crop list and crop ID",
+        "description": "Return a Json array",
+        "operationId": "getCrops",
+        "parameters": [
+          {
+            "name": "LanguageID",
+            "in": "query",
+            "description": "Enter LanguageID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "{\n  \"getCrops_data\": [\n    {\n      \"CropID\": \"31\",\n      \"Name\": \"Ajwan\",\n      \"Kharif\": \"0\",\n      \"Rabi\": \"0\",\n      \"Zaid\": \"0\",\n      \"CategoryID\": \"13\",\n      \"Category\": \"Others\"\n    },\n    {\n      \"CropID\": \"133\",\n      \"Name\": \"All_spices\",\n      \"Kharif\": \"1\",\n      \"Rabi\": \"0\",\n      \"Zaid\": \"0\",\n      \"CategoryID\": \"13\",\n      \"Category\": \"Others\"\n    }\n ]\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Api_GoM/getPestsDiseases/": {
+      "post": {
+        "tags": [
+          "Pests and Diseases"
+        ],
+        "summary": "This API returns, all the cropwise details about pest, disease, curative and preventive measures.",
+        "description": "Return a Json array.",
+        "operationId": "getPestsDiseases",
+        "parameters": [
+          {
+            "name": "CropID",
+            "in": "query",
+            "description": "Enter Crop ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "LanguageID",
+            "in": "query",
+            "description": "Enter Language ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getPestsDiseases": {
+                    "value": "{\n  \"getSymptoms_data\": [\n    {\n      \"ID\": \"1\",\n      \"Title\": \"Test English Title\",\n      \"Subtitle\": \"Test English Subtitle\",\n      \"Symptoms\": \"<p><a href=\\\"https://www.youtube.com/watch?v=c9PsmmjK5t4\\\" target=\\\"_blank\\\" rel=\\\"noopener\\\">video</a></p>\\r\\n<p>&nbsp;</p>\\r\\n<p>&nbsp;</p>\",\n      \"PreventiveMeasures\": \"<p>This Is a Test Data</p>\\r\\n<p>&nbsp;</p>\",\n      \"CurativeMeasures\": \"<p>This Is a Test Data</p>\\r\\n<p>&nbsp;</p>\",\n      \"CretatedOn\": \"2020-02-19\",\n      \"DiseasesID\": \"1\",\n      \"DiseasesName\": \"Pest\",\n      \"CropID\": \"1\",\n      \"CropName\": \"Cotton\"\n    }\n ]\n}"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ID supplied"
+          },
+          "404": {
+            "description": "Order not found"
+          }
+        }
+      }
+    },
+    "/Api_GoM/getGradesDoses/": {
+      "post": {
+        "tags": [
+          "Fertilizer Calculator"
+        ],
+        "summary": "To get all grades and doses Information for all crops with Cropwise",
+        "description": "Return a Json array.",
+        "operationId": "getGradesDoses",
+        "parameters": [
+          {
+            "name": "CropID",
+            "in": "query",
+            "description": "Enter Crop ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "LanguageID",
+            "in": "query",
+            "description": "Enter Language ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getGradesDoses": {
+                    "value": "{\n  \"getGradesDoses_data\": [\n    {\n      \"ID\": \"1\",\n      \"CropId\": \"1\",\n      \"CropName\": \"Cotton\",\n      \"DoesNumber\": \"1\",\n      \"Percentage\": \"20\"\n    }\n ]\n}"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ID supplied"
+          },
+          "404": {
+            "description": "Order not found"
+          }
+        }
+      }
+    },
+    "/Api_GoM/getKharifGradesDoses/": {
+      "post": {
+        "tags": [
+          "Fertilizer Calculator"
+        ],
+        "summary": "To get all Kharif grades and doses Information for all crops with Cropwise",
+        "description": "Return a Json array",
+        "operationId": "getKharifGradesDoses",
+        "parameters": [
+          {
+            "name": "CropID",
+            "in": "query",
+            "description": "Enter Crop ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "LanguageID",
+            "in": "query",
+            "description": "Enter Language ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getKharifGradesDoses": {
+                    "value": "{\n  \"getKharifGradesDoses_data\": [\n    {\n      \"ID\": \"1\",\n      \"CropId\": \"1\",\n      \"CropName\": \"कपास\",\n      \"DoesNumber\": \"1\",\n      \"Percentage\": \"20\"\n    }\n  ]\n}"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ID supplied"
+          },
+          "404": {
+            "description": "Order not found"
+          }
+        }
+      }
+    },
+    "/Api_GoM/getRabiGradesDoses/": {
+      "post": {
+        "tags": [
+          "Fertilizer Calculator"
+        ],
+        "summary": "To get all Rabi grades and doses Information for all crops with Cropwise",
+        "description": "Return a Json array.",
+        "operationId": "getRabiGradesDoses",
+        "parameters": [
+          {
+            "name": "CropID",
+            "in": "query",
+            "description": "Enter Crop ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "LanguageID",
+            "in": "query",
+            "description": "Enter Language ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getRabiGradesDoses": {
+                    "value": "{\n  \"getRabiGradesDoses_data\": [\n    {\n      \"ID\": \"31\",\n      \"CropId\": \"11\",\n      \"CropName\": \"Tomato\",\n      \"DoesNumber\": \"1\",\n      \"Percentage\": \"50\"\n    },\n    {\n      \"ID\": \"32\",\n      \"CropId\": \"11\",\n      \"CropName\": \"Tomato\",\n      \"DoesNumber\": \"2\",\n      \"Percentage\": \"16\"\n    }\n  ]\n}"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ID supplied"
+          },
+          "404": {
+            "description": "Order not found"
+          }
+        }
+      }
+    },
+    "/Api_GoM/getZaidGradesDoses/": {
+      "post": {
+        "tags": [
+          "Fertilizer Calculator"
+        ],
+        "summary": "To get all Zaid grades and doses Information for all crops with Cropwise",
+        "description": "Return a Json array.",
+        "operationId": "getZaidGradesDoses",
+        "parameters": [
+          {
+            "name": "CropID",
+            "in": "query",
+            "description": "Enter Crop ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "LanguageID",
+            "in": "query",
+            "description": "Enter Language ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getZaidGradesDoses": {
+                    "value": "{\n  \"getZaidGradesDoses_data\": [\n    {\n      \"ID\": \"44\",\n      \"CropId\": \"21\",\n      \"CropName\": \"Brinjal\",\n      \"DoesNumber\": \"1\",\n      \"Percentage\": \"50\"\n    },\n    {\n      \"ID\": \"45\",\n      \"CropId\": \"21\",\n      \"CropName\": \"Brinjal\",\n      \"DoesNumber\": \"2\",\n      \"Percentage\": \"25\"\n    },\n    {\n      \"ID\": \"46\",\n      \"CropId\": \"21\",\n      \"CropName\": \"Brinjal\",\n      \"DoesNumber\": \"3\",\n      \"Percentage\": \"25\"\n    }\n  ]\n}"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ID supplied"
+          },
+          "404": {
+            "description": "Order not found"
+          }
+        }
+      }
+    },
+    "/Api_GoM/getPricesFertilizers/": {
+      "post": {
+        "tags": [
+          "Fertilizer Calculator"
+        ],
+        "summary": "This API returns fertilizer prices",
+        "description": "Return a Json array",
+        "operationId": "getPricesFertilizers",
+        "parameters": [
+          {
+            "name": "LanguageID",
+            "in": "query",
+            "description": "Enter LanguageID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getPricesFertilizers": {
+                    "value": "{\n  \"getPricesFertilizers_data\": [\n    {\n      \"FertilizerID\": \"30\",\n      \"FertilizerName\": \"Urea\",\n      \"FertilizerValue\": \"460000\",\n      \"Price\": \"6.00\",\n      \"Priority\": \"1\",\n      \"Flag\": \"1\"\n    },\n    {\n      \"FertilizerID\": \"28\",\n      \"FertilizerName\": \"SSP\",\n      \"FertilizerValue\": \"001600\",\n      \"Price\": \"8.19\",\n      \"Priority\": \"2\",\n      \"Flag\": \"1\"\n    }\n ]\n}"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ID supplied"
+          },
+          "404": {
+            "description": "Order not found"
+          }
+        }
+      }
+    },
+    "/Api_GoM/getLandDataSource/": {
+      "post": {
+        "tags": [
+          "Fertilizer Calculator"
+        ],
+        "summary": "To get all land data source considered for generation",
+        "description": "Return a Json array",
+        "operationId": "getLandDataSource",
+        "parameters": [
+          {
+            "name": "CropID",
+            "in": "query",
+            "description": "Enter Crop ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "LanguageID",
+            "in": "query",
+            "description": "Enter Language ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getLandDataSource": {
+                    "value": "{\n  \"getLandDataSource_data\": [\n    {\n      \"ID\": \"3\",\n      \"StateCode\": \"27\",\n      \"StateName\": \"Maharashtra\",\n      \"DistrictCode\": \"522\",\n      \"DistrictName\": \"Ahmadnagar\",\n      \"BlockCode\": \"04201\",\n      \"BlockName\": \"Akola\",\n      \"SoilN\": \"420\",\n      \"SoilP\": \"29\",\n      \"SoilK\": \"676\",\n      \"CropID\": \"1\",\n      \"CropName\": \"Cotton\",\n      \"Recomended\": \"0\"\n    }\n  ]\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,180 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Exports\Family\BasicProfile;
+use App\Exports\Family\Assets;
+use App\Exports\Family\Goals;
+use App\Exports\Family\Challenges;
+use App\Exports\Family\Observation;
+use App\Exports\Family\Business;
+use App\Exports\Family\MemberCommitment;
+use App\Exports\Family\Agriculture;
+use App\Exports\Family\Horticulture;
+use App\Exports\Family\LiveStock;
+use App\Exports\Family\FamilyLoans;
+use App\Exports\Family\FamilySaving;
+use App\Exports\Family\FamilyExpenditures;
+use App\Exports\Family\Income;
+use App\Exports\Family\Analysis;
+use App\Models\Family;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use PDF;
+use Illuminate\Support\Facades\Session;
+
+
+
+class   DataExportController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->curdate = Carbon::now()->format('d-m-Y');
+    }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    // public function index(Request $request)
+    // {
+
+    //     $data = [];
+    //     $user = Auth::User();
+
+    //     return view('family_export.list')->with($data);
+    // }
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function family(Request $request)
+    {
+
+        // phpinfo();
+        // die();
+        $data = [];
+        $user = Auth::User();
+        if (!empty($request->get('Search'))) {
+            Session::put('family_export_session', $request->all());
+        }
+        if (!empty($request->get('clear'))) {
+            $request->session()->forget('family_export_session');
+        }
+        $query = "SELECT * from agency WHERE is_deleted = 0";
+        $data['agency'] = DB::select($query);
+
+        return view('DataExport.family')->with($data);
+    }
+
+
+
+
+
+
+
+    public function Family_basic_profile(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new BasicProfile(), 'FamilyBasicProfile_' . pdf_date() . '.xlsx');
+    }
+
+    public function Family_assests(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new Assets(), 'FamilyAssets_' . pdf_date() . '.xlsx');
+    }
+
+    public function Family_goals(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new Goals(), 'FamilyGoals_' . pdf_date() . '.xlsx');
+    }
+
+    public function Family_Challenges(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new Challenges(), 'FamilyChallenges_' . pdf_date() . '.xlsx');
+    }
+
+    public function Family_Observation(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new Observation(), 'FamilyObservation_' . pdf_date() . '.xlsx');
+    }
+
+    public function Family_Business(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new Business(), 'FamilyBusiness' . pdf_date() . '.xlsx');
+    }
+
+    public function Family_Commitment(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new MemberCommitment(), 'FamilyMemberCommitment' . pdf_date() . '.xlsx');
+    }
+    public function Family_Agriculture(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new Agriculture(), 'FamilyAgriculture' . pdf_date() . '.xlsx');
+    }
+
+    public function Family_Horticulture(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new Horticulture(), 'FamilyHorticulture' . pdf_date() . '.xlsx');
+    }
+
+    public function Family_LiveStock(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new LiveStock(), 'FamilyLiveStock' . pdf_date() . '.xlsx');
+    }
+
+    public function Family_Loans(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new FamilyLoans(), 'FamilyLoans' . pdf_date() . '.xlsx');
+    }
+
+    public function Family_Savings(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new FamilySaving(), 'FamilySavings' . pdf_date() . '.xlsx');
+    }
+
+    public function Family_Expenditure(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new FamilyExpenditures(), 'FamilyExpenditure' . pdf_date() . '.xlsx');
+    }
+
+    public function Family_income(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new Income(), 'FamilyIncome' . pdf_date() . '.xlsx');
+    }
+
+    public function Family_analysis(Request $request)
+    {
+        // prd("kk");
+        return Excel::download(new Analysis(), 'FamilyAnalysis' . pdf_date() . '.xlsx');
+    }
+
+
+
+
+
+
+
+
+
+
+}

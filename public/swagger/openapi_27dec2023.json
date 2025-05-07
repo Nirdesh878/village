@@ -1,0 +1,417 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "WOTR FarmPrecise",
+    "description": "This is to share data of WOTR FarmPrecise application.",
+    "version": ""
+  },
+  "servers": [
+    {
+      "url": "https://kisan.wotr.org.in/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Login with JWT auth",
+      "description": ""
+    },
+    {
+      "name": "Master",
+      "description": ""
+    },
+    {
+      "name": "Pests and Diseases",
+      "description": ""
+    },
+    {
+      "name": "Multimedia Advisory",
+      "description": ""
+    }
+  ],
+  "paths": {
+    "/Api_GoM/login": {
+      "post": {
+        "tags": [
+          "Login with JWT auth"
+        ],
+        "summary": "This API returns JWT Token and user details",
+        "description": "Return a Json array",
+        "operationId": "login",
+        "parameters": [
+          {
+            "name": "MobileNo",
+            "in": "query",
+            "description": "Enter Mobile No.",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Password",
+            "in": "query",
+            "description": "Enter Password",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getuser_data": {
+                    "value": "{\n  \"getuser_data\": { \n    \"Username\": \"mwadmin\",\n    \"MobileNo\": \"9871705804\",\n    \"State\": \"27\",\n    \"Language\": \"2\",\n    \"Token\": \"35664865620231204105730\"\n  }\n}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Api_GoM/getCrops": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "summary": "This API returns crop list and crop ID",
+        "description": "Return a Json array",
+        "operationId": "getCrops",
+        "parameters": [
+          {
+            "name": "Token",
+            "in": "query",
+            "description": "Enter Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "{\n  \"getCrops_data\": [\n    {\n      \"CropID\": \"18\",\n      \"Name\": \"करडई\",\n      \"CategoryID\": \"13\",\n      \"Category\": \"गळीत\"\n    } \n ]\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Api_GoM/getStatge": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "summary": "This API returns crop list and crop ID",
+        "description": "Return a Json array",
+        "operationId": "getStatge",
+        "parameters": [
+          {
+            "name": "CropID",
+            "in": "query",
+            "description": "Enter Crop ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Token",
+            "in": "query",
+            "description": "Enter Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getCrops_data": {
+                    "value": "{\n  \"getCrops_data\": [\n    {\n      \"CropID\": \"18\",\n      \"Name\": \"करडई\",\n      \"CategoryID\": \"13\",\n      \"Category\": \"गळीत\"\n    } \n ]\n}                  \n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Api_GoM/getState": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "summary": "This API returns State list and State ID",
+        "description": "Return a Json array",
+        "operationId": "getState",
+        "parameters": [
+          {
+            "name": "Token",
+            "in": "query",
+            "description": "Enter Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getState_data": {
+                    "value": "{\n  \"getState_data\": [\n    {\n      \"StateCode\": \"27\",\n      \"StateName\": \"महाराष्ट्र\",\n      \"StateNameLocalLang\": \"Maharashtra\" \n    }\n  ]\n}                  "
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Api_GoM/getDistrict": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "summary": "This API returns District list and District ID",
+        "description": "Return a Json array",
+        "operationId": "getDistrict",
+        "parameters": [
+          {
+            "name": "Token",
+            "in": "query",
+            "description": "Enter Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getDistrict_data": {
+                    "value": "{\n  \"getDistrict_data\": [\n    {\n      \"StateCode\": \"27\",\n      \"DistrictCode\": \"497\",\n      \"DistrictName\": \"नंदुरबार\",\n      \"DistrictNameLocalLang\": \"Nandurbar\"\n    }\n  ]\n}                                    "
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Api_GoM/getBlock": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "summary": "This API returns Block list and Block ID",
+        "description": "Return a Json array",
+        "operationId": "getBlock",
+        "parameters": [
+          {
+            "name": "DistrictCode",
+            "in": "query",
+            "description": "Enter District Code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Token",
+            "in": "query",
+            "description": "Enter Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getBlock_data": {
+                    "value": "{\n  \"getBlock_data\": [\n    {\n      \"StateCode\": \"27\",\n      \"DistrictCode\": \"497\",\n      \"BlockCode\": \"03950\",\n      \"BlockName\": \"अक्कलकुआ\",\n      \"BlockNameLocalLang\": \"Akkalkuwa\"\n    }\n  ]\n}                                    "
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Api_GoM/getVillage": {
+      "get": {
+        "tags": [
+          "Master"
+        ],
+        "summary": "This API returns Village list and Village ID",
+        "description": "Return a Json array",
+        "operationId": "getVillage",
+        "parameters": [
+          {
+            "name": "DistrictCode",
+            "in": "query",
+            "description": "Enter District Code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "BlockCode",
+            "in": "query",
+            "description": "Enter Block Code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Token",
+            "in": "query",
+            "description": "Enter Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getBlock_data": {
+                    "value": "{\n  \"getBlock_data\": [\n    {\n      \"StateCode\": \"27\",\n      \"DistrictCode\": \"497\",\n      \"BlockCode\": \"03950\",\n      \"BlockName\": \"अक्कलकुआ\",\n      \"BlockNameLocalLang\": \"Akkalkuwa\"\n    }\n  ]\n}                                    "
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Api_GoM/getPestsDiseases/": {
+      "post": {
+        "tags": [
+          "Pests and Diseases"
+        ],
+        "summary": "This API returns, all the cropwise details about pest, disease, curative and preventive measures.",
+        "description": "Return a Json array.",
+        "operationId": "getPestsDiseases",
+        "parameters": [
+          {
+            "name": "CropID",
+            "in": "query",
+            "description": "Enter Crop ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Token",
+            "in": "query",
+            "description": "Enter Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getPestsDiseases": {
+                    "value": "{\n  \"getSymptoms_data\": [\n    { \n      \"Title\": \"Test English Title\",\n      \"Subtitle\": \"Test English Subtitle\",\n      \"Symptoms\": \"<p><a href=\\\"https://www.youtube.com/watch?v=c9PsmmjK5t4\\\" target=\\\"_blank\\\" rel=\\\"noopener\\\">video</a></p>\\r\\n<p>&nbsp;</p>\\r\\n<p>&nbsp;</p>\",\n      \"PreventiveMeasures\": \"<p>This Is a Test Data</p>\\r\\n<p>&nbsp;</p>\",\n      \"CurativeMeasures\": \"<p>This Is a Test Data</p>\\r\\n<p>&nbsp;</p>\",\n      \"CretatedOn\": \"2020-02-19\", \n      \"CropID\": \"18\",\n      \"CropName\": \"करडई\"\n    }\n ]\n}"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ID supplied"
+          },
+          "404": {
+            "description": "Order not found"
+          }
+        }
+      }
+    },
+    "/Api_GoM/getMultimedia_advisory": {
+      "get": {
+        "tags": [
+          "Multimedia Advisory"
+        ],
+        "summary": "This API returns Multimedia Advisory list with crop & stage wise",
+        "description": "Return a Json array",
+        "operationId": "getMultimedia_advisory",
+        "parameters": [
+          {
+            "name": "CropID",
+            "in": "query",
+            "description": "Enter Crop ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Token",
+            "in": "query",
+            "description": "Enter Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "getMultimedia_advisorydata": {
+                    "value": "{\n  \"getMultimedia_advisorydata\": [\n    {\n       \"Advisory\": \"कांदा लागवडीसाठी उत्तम पाण्याचा निचरा होणारी हलकी ते मध्यम भारी जमिन निवडावी.\",\n       \"StageName\": \"पूर्वमशागत\",\n       \"CropID\": \"10\",\n       \"CropName\": \"कांदा\"\"\n    } \n ]\n} \n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
