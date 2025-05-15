@@ -84,7 +84,10 @@ $user = Auth::user();
                             </div>
                             <div class="rating-box2 s-box">
                                 <h4>Poverty Ranking</h4>
-                                <h3><?php echo e($family_profile[0]->fp_wealth_rank); ?></h3>
+                                <?php
+                                    $WealthData = getMstCommonData(7,$family_profile[0]->fp_wealth_rank ?? null);
+                                ?>
+                                <h3><?php echo e($WealthData[0]->common_values ?? 'N/A'); ?></h3>
                             </div>
                         </div>
                     </div>
@@ -126,7 +129,11 @@ $user = Auth::user();
                             <a class="nav-link " id="v-pills-quality-check-tab" data-toggle="pill" href="#v-pills-quality-check" role="tab" aria-controls="v-pills-quality-check" aria-selected="false"><i class="las la-briefcase mr-2"></i>Manager Check</a>
 
                             <?php elseif($u_type == 'QA'): ?>
-                            <a class="nav-link " id="v-pills-quality-check-tab-qa" data-toggle="pill" href="#v-pills-quality-check-qa" role="tab" aria-controls="v-pills-quality-check-qa" aria-selected="false"><i class="las la-briefcase mr-2"></i>Quality Check</a>
+                                <?php if($task_type == 'P1' && $family_business == 0): ?>
+                                    <a class="nav-link " id="v-pills-quality-check-tab-qa" data-toggle="pill" href="#v-pills-quality-check-qa" role="tab" aria-controls="v-pills-quality-check-qa" aria-selected="false"><i class="las la-briefcase mr-2"></i>Quality Check</a>
+                                <?php elseif($task_type == 'P2'): ?>
+                                <a class="nav-link " id="v-pills-quality-check-tab-qa" data-toggle="pill" href="#v-pills-quality-check-qa" role="tab" aria-controls="v-pills-quality-check-qa" aria-selected="false"><i class="las la-briefcase mr-2"></i>Quality Check</a>
+                                <?php endif; ?>
                             <?php endif; ?>
                             <a class="nav-link " id="v-pills-remarks-tab" data-toggle="pill" href="#v-pills-remarks" role="tab" aria-controls="v-pills-remarks" aria-selected="false"><i class="las la-briefcase mr-2"></i>Remarks</a>
                         </div>
@@ -186,7 +193,10 @@ $user = Auth::user();
                                                 <div class="row detail">
                                                     <div class="col-6">Gender</div>
                                                     <div class="col-6">
-                                                        <?php echo e($family_profile[0]->fp_gender != '' ? $family_profile[0]->fp_gender : 'N/A'); ?>
+                                                        <?php
+                                                            $GenderData = getMstCommonData(1,$family_profile[0]->fp_gender  ?? null);
+                                                        ?>
+                                                        <?php echo e($GenderData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>
@@ -195,7 +205,10 @@ $user = Auth::user();
                                                 <div class="row detail">
                                                     <div class="col-6">Caste</div>
                                                     <div class="col-6">
-                                                        <?php echo e($caste_name ?? 'N/A'); ?>
+                                                    <?php
+                                                        $CasteData = getMstCommonData(2,$family_profile[0]->fp_caste ?? null);
+                                                    ?>
+                                                    <?php echo e($CasteData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>
@@ -367,7 +380,10 @@ $user = Auth::user();
                                                 <div class="row detail">
                                                     <div class="col-6">Female Headed</div>
                                                     <div class="col-6">
-                                                        <?php echo e($family_profile[0]->fp_female_headed != '' ? $family_profile[0]->fp_female_headed : 'N/A'); ?>
+                                                        <?php
+                                                            $FemaleHeadedData = getMstCommonData(3,$family_profile[0]->fp_female_headed ?? null);
+                                                        ?>
+                                                        <?php echo e($FemaleHeadedData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>
@@ -631,33 +647,89 @@ $user = Auth::user();
                                                     <th>Malnutritions</th>
                                                     <th>Undernourished</th>
                                                     <th>Vulnerable</th>
+                                                    <th>Employed children</th>
+                                                    <th>Health Issue?</th>
+                                                    <th>Does member have an insurance policy?</th>
+                                                    <th>Insurance Type</th>
+                                                    <th>Policy Name</th>
+                                                    <th>Premium Amount</th>
+                                                    <th>Frequency</th>
                                                 </tr>
                                             </thead>
 
                                             <tbody>
                                                 <?php $__currentLoopData = $family_member_info; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $res): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <?php
+                                                        $MGenderData = getMstCommonData(1,$res->gender  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $MRelationData = getMstCommonData(5,$res->relation  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $MeducationData = getMstCommonData(6,$res->education  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $MaritalStatusData = getMstCommonData(35,$res->maritalStatus  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $employedchildrenData = getMstCommonData(11,$res->employedChildren  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $isHealthIssueData = getMstCommonData(3,$res->isHealthIssue  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $insuranceAvlData = getMstCommonData(3,$res->insuranceAvl  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $insuranceTypeData = getMstCommonData(13,$res->insuranceType  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $frequencyData = getMstCommonData(14,$res->frequency  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $malnutritionsData = getMstCommonData(3,$res->malnutritions  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $undernourishedData = getMstCommonData(3,$res->undernourished  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $employedData = getMstCommonData(3,$res->employed  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $differentlyAbledData = getMstCommonData(3,$res->differentlyAbled  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $vulnerableData = getMstCommonData(3,$res->vulnerable  ?? null);
+                                                    ?>
                                                 <tr>
                                                     <td><?php echo e($res->name); ?></td>
                                                     <td><?php echo e($res->dob); ?></td>
                                                     <td><?php echo e($res->age); ?></td>
-                                                    <td><?php echo e($res->gender); ?></td>
-                                                    <td><?php echo e($res->relation); ?></td>
-                                                    <td><?php echo e($res->education); ?></td>
-                                                    <td><?php echo e($res->maritalStatus); ?></td>
-                                                    <td><?php echo e($res->differentlyAbled != 0 ? 'Yes' : 'No'); ?></td>
-                                                    <td><?php echo e($res->employed != 0 ? 'Yes' : 'No'); ?></td>
+                                                    <td><?php echo e($MGenderData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <td><?php echo e($MRelationData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <td><?php echo e($MeducationData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <td><?php echo e($MaritalStatusData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <td><?php echo e($differentlyAbledData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <td><?php echo e($employedData[0]->common_values ?? 'N/A'); ?></td>
                                                     <td><?php echo e($res->earning_description); ?></td>
                                                     <?php if($res->age >=15): ?>
-                                                    <td><?php echo e($res->malnutritions != 0 ? 'Yes' : 'No'); ?></td>
-                                                        <?php else: ?>
-                                                        <td>N/A</td>
+                                                    <td><?php echo e($malnutritionsData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <?php else: ?>
+                                                    <td>N/A</td>
                                                     <?php endif; ?>
                                                     <?php if($res->age < 15): ?>
-                                                    <td><?php echo e($res->undernourished != 0 ? 'Yes' : 'No'); ?></td>
-                                                        <?php else: ?>
-                                                        <td>N/A</td>
+                                                    <td><?php echo e($undernourishedData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <?php else: ?>
+                                                    <td>N/A</td>
                                                     <?php endif; ?>
-                                                    <td><?php echo e($res->vulnerable != 0 ? 'Yes' : 'No'); ?></td>
+                                                    <td><?php echo e($vulnerableData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <td><?php echo e($employedchildrenData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <td><?php echo e($isHealthIssueData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <td><?php echo e($insuranceAvlData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <td><?php echo e($insuranceTypeData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <td><?php echo e($res->policyName); ?></td>
+                                                    <td><?php echo e($res->premiumAmount); ?></td>
+                                                    <td><?php echo e($frequencyData[0]->common_values ?? 'N/A'); ?></td>
                                                 </tr>
                                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                             </tbody>
@@ -677,10 +749,13 @@ $user = Auth::user();
                                                 <tr>
                                                     <th colspan="2">Are you aware of Govt. Livelihood Programs?
                                                     </th>
-                                                    <th><?php echo e($family_profile[0]->gov_liveilhood_program); ?></th>
+                                                    <?php
+                                                        $Gov_liveilhoodData = getMstCommonData(3,$family_profile[0]->gov_liveilhood_program   ?? null);
+                                                    ?>
+                                                    <th><?php echo e($Gov_liveilhoodData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->gov_liveilhood_program == 'Yes'): ?>
+                                            <?php if($family_profile[0]->gov_liveilhood_program == 1): ?>
                                             <tbody>
                                                 <tr>
                                                     <th>Programs</th>
@@ -732,10 +807,13 @@ $user = Auth::user();
                                                     <th width="100%">A. Family not educated up to at least six
                                                         years of
                                                         schooling?</th>
-                                                    <th><?php echo e($family_profile[0]->family_member_not_educated); ?></th>
+                                                        <?php
+                                                            $NotEducatedData = getMstCommonData(3,$family_profile[0]->family_member_not_educated   ?? null);
+                                                        ?>
+                                                    <th><?php echo e($NotEducatedData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->family_member_not_educated == 'Yes'): ?>
+                                            <?php if($family_profile[0]->family_member_not_educated == 1): ?>
                                             <tbody>
                                                 <tr>
                                                     <td>i. Male</td>
@@ -766,12 +844,13 @@ $user = Auth::user();
                                                     <th width="100%">B. Any children or adolescents up to age of
                                                         13 away from
                                                         school or dropped out?</th>
-                                                    <th><?php echo e($family_profile[0]->children_or_adolescents_upto_age); ?>
-
-                                                    </th>
+                                                        <?php
+                                                            $childrenData = getMstCommonData(3,$family_profile[0]->children_or_adolescents_upto_age   ?? null);
+                                                        ?>
+                                                        <th><?php echo e($childrenData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->children_or_adolescents_upto_age == 'Yes'): ?>
+                                            <?php if($family_profile[0]->children_or_adolescents_upto_age == 1): ?>
                                             <tbody>
                                                 <tr>
                                                     <td>i. Male</td>
@@ -813,10 +892,13 @@ $user = Auth::user();
                                                     <th width="100%">A. Family member have access to all three
                                                         meals on a daily
                                                         basis?</th>
-                                                    <th><?php echo e($family_profile[0]->aNutritionMortality); ?></th>
+                                                        <?php
+                                                            $NutritionMoralityData = getMstCommonData(3,$family_profile[0]->aNutritionMortality   ?? null);
+                                                        ?>
+                                                    <th><?php echo e($NutritionMoralityData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->aNutritionMortality == 'No'): ?>
+                                            <?php if($family_profile[0]->aNutritionMortality == 2): ?>
                                             <tbody>
                                                 <tr>
                                                     <td>i. Male</td>
@@ -846,10 +928,13 @@ $user = Auth::user();
                                                 <tr>
                                                     <th width="100%">B.Does any member suffer due to
                                                         malnutrition?</th>
-                                                    <th><?php echo e($family_profile[0]->bNutritionMortality); ?></th>
+                                                        <?php
+                                                            $bNutritionMoralityData = getMstCommonData(3,$family_profile[0]->bNutritionMortality   ?? null);
+                                                        ?>
+                                                <th><?php echo e($bNutritionMoralityData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->bNutritionMortality == 'Yes'): ?>
+                                            <?php if($family_profile[0]->bNutritionMortality == 1): ?>
                                             <tbody>
                                                 <tr>
                                                     <td>i. Male</td>
@@ -880,10 +965,13 @@ $user = Auth::user();
                                                     <th width="100%">C.Does any one of the children/adolescents
                                                         or adults appear
                                                         to be undernourished (stunted,wasted,under-weight)?</th>
-                                                    <th><?php echo e($family_profile[0]->cNutritionMortality); ?></th>
+                                                        <?php
+                                                            $cNutritionMoralityData = getMstCommonData(3,$family_profile[0]->cNutritionMortality   ?? null);
+                                                        ?>
+                                                    <th><?php echo e($cNutritionMoralityData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->cNutritionMortality == 'Yes'): ?>
+                                            <?php if($family_profile[0]->cNutritionMortality == 1): ?>
                                             <tbody>
                                                 <tr>
                                                     <td>i. Male</td>
@@ -913,10 +1001,13 @@ $user = Auth::user();
                                                 <tr>
                                                     <th width="100%">D.Have any children or adolescents died
                                                         below age 18?</th>
-                                                    <th><?php echo e($family_profile[0]->dNutritionMortality); ?></th>
+                                                        <?php
+                                                            $dNutritionMoralityData = getMstCommonData(3,$family_profile[0]->dNutritionMortality   ?? null);
+                                                        ?>
+                                                    <th><?php echo e($dNutritionMoralityData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->dNutritionMortality == 'Yes'): ?>
+                                            <?php if($family_profile[0]->dNutritionMortality == 1): ?>
                                             <tbody>
                                                 <tr>
                                                     <td>i. Male</td>
@@ -957,7 +1048,10 @@ $user = Auth::user();
                                                 <div class="row detail">
                                                     <div class="col-6">A.Sanitation Does the family</div>
                                                     <div class="col-6">
-                                                        <?php echo e($family_profile[0]->sanitation); ?>
+                                                        <?php
+                                                            $SanitizationData = getMstCommonData(8,$family_profile[0]->sanitation   ?? null);
+                                                        ?>
+                                                    <?php echo e($SanitizationData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>
@@ -967,7 +1061,10 @@ $user = Auth::user();
                                                     <div class="col-6">B.Electricity Does the house they
                                                         live in have electercity?</div>
                                                     <div class="col-6">
-                                                        <?php echo e($family_profile[0]->sElectricity); ?>
+                                                        <?php
+                                                            $ElectricityData = getMstCommonData(3,$family_profile[0]->sElectricity   ?? null);
+                                                        ?>
+                                                    <?php echo e($ElectricityData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>
@@ -978,7 +1075,10 @@ $user = Auth::user();
                                                         water for drinking from
                                                     </div>
                                                     <div class="col-6">
-                                                        <?php echo e($family_profile[0]->sDrinkingWater); ?>
+                                                        <?php
+                                                            $DrinkingWaterData = getMstCommonData(9,$family_profile[0]->sDrinkingWater   ?? null);
+                                                        ?>
+                                                    <?php echo e($DrinkingWaterData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>
@@ -988,7 +1088,10 @@ $user = Auth::user();
                                                     <div class="col-6">D.Cooking Fuel What is the method
                                                         used by family</div>
                                                     <div class="col-6">
-                                                        <?php echo e($family_profile[0]->sCookingFuel); ?>
+                                                        <?php
+                                                            $CookingFuelData = getMstCommonData(10,$family_profile[0]->sCookingFuel   ?? null);
+                                                        ?>
+                                                    <?php echo e($CookingFuelData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>
@@ -1059,12 +1162,14 @@ $user = Auth::user();
                                                     <div class="col-6">Family Migration
                                                     </div>
                                                     <div class="col-6">
-                                                        <?php echo e(checkna($family_profile[0]->fp_family_migrated)); ?>
-
+                                                        <?php
+                                                            $MigratedData = getMstCommonData(12,$family_profile[0]->fp_family_migrated   ?? null);
+                                                        ?>
+                                                        <td><?php echo e($MigratedData[0]->common_values ?? 'N/A'); ?></td>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <?php if($family_profile[0]->fp_family_migrated == 'Yes'): ?>
+                                            <?php if($family_profile[0]->fp_family_migrated == 1): ?>
                                             <div class="col-md-6">
                                                 <div class="row detail">
                                                     <div class="col-6">Member Reason Of Migration
@@ -1092,7 +1197,10 @@ $user = Auth::user();
                                                 <div class="row detail">
                                                     <div class="col-6">Wealth Rank</div>
                                                     <div class="col-6">
-                                                        <?php echo e(checkna($family_profile[0]->fp_wealth_rank)); ?>
+                                                        <?php
+                                                            $WealthData = getMstCommonData(7,$family_profile[0]->fp_wealth_rank ?? null);
+                                                        ?>
+                                                        <?php echo e($WealthData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>
@@ -1130,7 +1238,10 @@ $user = Auth::user();
                                                 <div class="row detail">
                                                     <div class="col-6">Gender</div>
                                                     <div class="col-6">
-                                                        <?php echo e($family_profile[0]->fp_gender != '' ? $family_profile[0]->fp_gender : 'N/A'); ?>
+                                                        <?php
+                                                        $GenderData = getMstCommonData(1,$family_profile[0]->fp_gender  ?? null);
+                                                    ?>
+                                                    <?php echo e($GenderData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>
@@ -1139,7 +1250,10 @@ $user = Auth::user();
                                                 <div class="row detail">
                                                     <div class="col-6">Caste</div>
                                                     <div class="col-6">
-                                                        <?php echo e($family_profile[0]->fp_caste != '' ? $family_profile[0]->fp_caste : 'N/A'); ?>
+                                                        <?php
+                                                            $CasteData = getMstCommonData(2,$family_profile[0]->fp_caste ?? null);
+                                                        ?>
+                                                        <?php echo e($CasteData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>
@@ -1311,7 +1425,10 @@ $user = Auth::user();
                                                 <div class="row detail">
                                                     <div class="col-6">Female Headed</div>
                                                     <div class="col-6">
-                                                        <?php echo e($family_profile[0]->fp_female_headed != '' ? $family_profile[0]->fp_female_headed : 'N/A'); ?>
+                                                        <?php
+                                                            $FemaleHeadedData = getMstCommonData(3,$family_profile[0]->fp_female_headed ?? null);
+                                                        ?>
+                                                        <?php echo e($FemaleHeadedData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>
@@ -1580,14 +1697,26 @@ $user = Auth::user();
 
                                             <tbody>
                                                 <?php $__currentLoopData = $family_member_info; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $res): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <?php
+                                                        $MGenderData = getMstCommonData(1,$res->gender  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $MRelationData = getMstCommonData(5,$res->relation  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $MeducationData = getMstCommonData(6,$res->education  ?? null);
+                                                    ?>
+                                                    <?php
+                                                        $MaritalStatusData = getMstCommonData(35,$res->maritalStatus  ?? null);
+                                                    ?>
                                                 <tr>
                                                     <td><?php echo e($res->name); ?></td>
                                                     <td><?php echo e($res->dob); ?></td>
                                                     <td><?php echo e($res->age); ?></td>
-                                                    <td><?php echo e($res->gender); ?></td>
-                                                    <td><?php echo e($res->relation); ?></td>
-                                                    <td><?php echo e($res->education); ?></td>
-                                                    <td><?php echo e($res->maritalStatus); ?></td>
+                                                    <td><?php echo e($MGenderData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <td><?php echo e($MRelationData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <td><?php echo e($MeducationData[0]->common_values ?? 'N/A'); ?></td>
+                                                    <td><?php echo e($MaritalStatusData[0]->common_values ?? 'N/A'); ?></td>
                                                     <td><?php echo e($res->differentlyAbled != 0 ? 'Yes' : 'No'); ?></td>
                                                     <td><?php echo e($res->employed != 0 ? 'Yes' : 'No'); ?></td>
                                                     <td><?php echo e($res->earning_description); ?></td>
@@ -1621,10 +1750,13 @@ $user = Auth::user();
                                                 <tr>
                                                     <th colspan="2">Are you aware of Govt. Livelihood Programs?
                                                     </th>
-                                                    <th><?php echo e($family_profile[0]->gov_liveilhood_program); ?></th>
+                                                    <?php
+                                                        $Gov_liveilhoodData = getMstCommonData(3,$family_profile[0]->gov_liveilhood_program   ?? null);
+                                                    ?>
+                                                    <th><?php echo e($Gov_liveilhoodData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->gov_liveilhood_program == 'Yes'): ?>
+                                            <?php if($family_profile[0]->gov_liveilhood_program == 1): ?>
                                             <tbody>
                                                 <tr>
                                                     <th>Programs</th>
@@ -1676,10 +1808,13 @@ $user = Auth::user();
                                                     <th width="100%">A. Family not educated up to at least six
                                                         years of
                                                         schooling?</th>
-                                                    <th><?php echo e($family_profile[0]->family_member_not_educated); ?></th>
+                                                        <?php
+                                                        $NotEducatedData = getMstCommonData(3,$family_profile[0]->family_member_not_educated   ?? null);
+                                                    ?>
+                                                    <th><?php echo e($NotEducatedData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->family_member_not_educated == 'Yes'): ?>
+                                            <?php if($family_profile[0]->family_member_not_educated == 1): ?>
                                             <tbody>
                                                 <tr>
                                                     <td>i. Male</td>
@@ -1710,12 +1845,13 @@ $user = Auth::user();
                                                     <th width="100%">B. Any children or adolescents up to age of
                                                         13 away from
                                                         school or dropped out?</th>
-                                                    <th><?php echo e($family_profile[0]->children_or_adolescents_upto_age); ?>
-
-                                                    </th>
+                                                        <?php
+                                                            $childrenData = getMstCommonData(3,$family_profile[0]->children_or_adolescents_upto_age   ?? null);
+                                                        ?>
+                                                <th><?php echo e($childrenData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->children_or_adolescents_upto_age == 'Yes'): ?>
+                                            <?php if($family_profile[0]->children_or_adolescents_upto_age == 1): ?>
                                             <tbody>
                                                 <tr>
                                                     <td>i. Male</td>
@@ -1757,10 +1893,13 @@ $user = Auth::user();
                                                     <th width="100%">A. Family member have access to all three
                                                         meals on a daily
                                                         basis?</th>
-                                                    <th><?php echo e($family_profile[0]->aNutritionMortality); ?></th>
+                                                        <?php
+                                                            $NutritionMoralityData = getMstCommonData(3,$family_profile[0]->aNutritionMortality   ?? null);
+                                                        ?>
+                                                    <th><?php echo e($NutritionMoralityData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->aNutritionMortality == 'No'): ?>
+                                            <?php if($family_profile[0]->aNutritionMortality == 2): ?>
                                             <tbody>
                                                 <tr>
                                                     <td>i. Male</td>
@@ -1790,10 +1929,13 @@ $user = Auth::user();
                                                 <tr>
                                                     <th width="100%">B.Does any member suffer due to
                                                         malnutrition?</th>
-                                                    <th><?php echo e($family_profile[0]->bNutritionMortality); ?></th>
+                                                        <?php
+                                                            $bNutritionMoralityData = getMstCommonData(3,$family_profile[0]->bNutritionMortality   ?? null);
+                                                        ?>
+                                                    <th><?php echo e($bNutritionMoralityData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->bNutritionMortality == 'Yes'): ?>
+                                            <?php if($family_profile[0]->bNutritionMortality == 1): ?>
                                             <tbody>
                                                 <tr>
                                                     <td>i. Male</td>
@@ -1824,10 +1966,13 @@ $user = Auth::user();
                                                     <th width="100%">C.Does any one of the children/adolescents
                                                         or adults appear
                                                         to be undernourished (stunted,wasted,under-weight)?</th>
-                                                    <th><?php echo e($family_profile[0]->cNutritionMortality); ?></th>
+                                                        <?php
+                                                            $cNutritionMoralityData = getMstCommonData(3,$family_profile[0]->cNutritionMortality   ?? null);
+                                                        ?>
+                                                    <th><?php echo e($cNutritionMoralityData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->cNutritionMortality == 'Yes'): ?>
+                                            <?php if($family_profile[0]->cNutritionMortality == 1): ?>
                                             <tbody>
                                                 <tr>
                                                     <td>i. Male</td>
@@ -1857,10 +2002,13 @@ $user = Auth::user();
                                                 <tr>
                                                     <th width="100%">D.Have any children or adolescents died
                                                         below age 18?</th>
-                                                    <th><?php echo e($family_profile[0]->dNutritionMortality); ?></th>
+                                                        <?php
+                                                            $dNutritionMoralityData = getMstCommonData(3,$family_profile[0]->dNutritionMortality   ?? null);
+                                                        ?>
+                                                    <th><?php echo e($dNutritionMoralityData[0]->common_values ?? 'N/A'); ?></th>
                                                 </tr>
                                             </thead>
-                                            <?php if($family_profile[0]->dNutritionMortality == 'Yes'): ?>
+                                            <?php if($family_profile[0]->dNutritionMortality == 1): ?>
                                             <tbody>
                                                 <tr>
                                                     <td>i. Male</td>
@@ -1901,7 +2049,10 @@ $user = Auth::user();
                                                 <div class="row detail">
                                                     <div class="col-6">A.Sanitation Does the family</div>
                                                     <div class="col-6">
-                                                        <?php echo e($family_profile[0]->sanitation); ?>
+                                                        <?php
+                                                            $SanitizationData = getMstCommonData(8,$family_profile[0]->sanitation   ?? null);
+                                                        ?>
+                                                    <?php echo e($SanitizationData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>
@@ -1911,7 +2062,10 @@ $user = Auth::user();
                                                     <div class="col-6">B.Electricity Does the house they
                                                         live in have electercity?</div>
                                                     <div class="col-6">
-                                                        <?php echo e($family_profile[0]->sElectricity); ?>
+                                                        <?php
+                                                            $ElectricityData = getMstCommonData(3,$family_profile[0]->sElectricity   ?? null);
+                                                        ?>
+                                                    <?php echo e($ElectricityData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>
@@ -2036,7 +2190,10 @@ $user = Auth::user();
                                                 <div class="row detail">
                                                     <div class="col-6">Wealth Rank</div>
                                                     <div class="col-6">
-                                                        <?php echo e(checkna($family_profile[0]->fp_wealth_rank)); ?>
+                                                        <?php
+                                                            $WealthData = getMstCommonData(7,$family_profile[0]->fp_wealth_rank ?? null);
+                                                        ?>
+                                                        <?php echo e($WealthData[0]->common_values ?? 'N/A'); ?>
 
                                                     </div>
                                                 </div>

@@ -559,7 +559,7 @@ class FamilyController extends Controller
 
         $query = "Select * from family_sub_mst where family_mst_id=$family->id";
         $result = DB::select($query);
-        $data['family_business'] = $result[0]->family_buisness;
+        $data['family_buisness'] = $result[0]->family_buisness;
         $data['task_status'] = $result[0]->dm_p1;
         $data['task_status_qa_p1'] = $result[0]->qa_p1;
         $data['dm_p2_status'] = $result[0]->dm_p2;
@@ -576,6 +576,7 @@ class FamilyController extends Controller
             ->where('z.is_deleted', '=', 0)
             ->where('x.id', '=', $result[0]->id)
             ->get()->toArray();
+        
         $query_1 = "Select b.shgName from shg_mst a inner join shg_sub_mst c on a.id=c.shg_mst_id inner join shg_profile b on c.id=b.shg_sub_mst_id where a.is_deleted=0 and a.uin='$family->shg_uin' ";
         $data['shg_profile'] = DB::select($query_1);
 
@@ -800,28 +801,28 @@ class FamilyController extends Controller
 
 
 
-        if (!empty($data['concent'][0]->signature_of_facilitatorPic)) {
-            if ($data['concent'][0]->signature_of_facilitatorPic != '\"\"') {
-                $raw_png1 = implode(array_map('chr', json_decode($data['concent'][0]->signature_of_facilitatorPic)));
-                $name1 = 'fac_' . $result[0]->id . '.png';
-                $fb1 = fopen('./newsignature/' . $name1, 'wb');
-                fwrite($fb1, $raw_png1);
-                $data['concent'][0]->signature_of_facilitatorPic = $name1;
-            }
+        // if (!empty($data['concent'][0]->signature_of_facilitatorPic)) {
+        //     if ($data['concent'][0]->signature_of_facilitatorPic != '\"\"') {
+        //         $raw_png1 = implode(array_map('chr', json_decode($data['concent'][0]->signature_of_facilitatorPic)));
+        //         $name1 = 'fac_' . $result[0]->id . '.png';
+        //         $fb1 = fopen('./newsignature/' . $name1, 'wb');
+        //         fwrite($fb1, $raw_png1);
+        //         $data['concent'][0]->signature_of_facilitatorPic = $name1;
+        //     }
 
 
-        }
-        if (!empty($data['concent'][0]->signature_of_participantPic)) {
-            if ($data['concent'][0]->signature_of_participantPic != '\"\"') {
-                $raw_png2 = implode(array_map('chr', json_decode($data['concent'][0]->signature_of_participantPic)));
-                $name2 = 'par_' . $result[0]->id . '.png';
-                $fb2 = fopen('./newsignature/' . $name2, 'wb');
-                fwrite($fb2, $raw_png2);
-                $data['concent'][0]->signature_of_participantPic = $name2;
-            }
+        // }
+        // if (!empty($data['concent'][0]->signature_of_participantPic)) {
+        //     if ($data['concent'][0]->signature_of_participantPic != '\"\"') {
+        //         $raw_png2 = implode(array_map('chr', json_decode($data['concent'][0]->signature_of_participantPic)));
+        //         $name2 = 'par_' . $result[0]->id . '.png';
+        //         $fb2 = fopen('./newsignature/' . $name2, 'wb');
+        //         fwrite($fb2, $raw_png2);
+        //         $data['concent'][0]->signature_of_participantPic = $name2;
+        //     }
 
 
-         }
+        //  }
 
 
         $data['expenditure_next_year'] = DB::table('family_expenditure_next_year as a')

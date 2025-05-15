@@ -207,7 +207,7 @@
                                                     </div>
                                                     <div class="row align-items-center mb-2 d-flex">
                                                         <div class="col-8">
-                                                            <a href="{{ url('Family_Agriculture') }}" id="export">
+                                                            <a href="{{ url('Family_Agriculture') }}" id="export"> 
                                                                 <img src="{{ asset('assets\images\excel.png') }}"
                                                                     data-toggle="tooltip" title="Excel Export"
                                                                     data-src="{{ asset('assets\images\excel.png') }}"

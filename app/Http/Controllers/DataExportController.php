@@ -202,7 +202,7 @@ class   DataExportController extends Controller
         return Excel::download(new Business(), 'FamilyBusiness' . pdf_date() . '.xlsx');
     }
 
-    public function Family_Commitment(Request $request)
+    public function Family_Commitment(Request $request) 
     {
         // prd("kk");
         return Excel::download(new MemberCommitment(), 'FamilyMemberCommitment' . pdf_date() . '.xlsx');

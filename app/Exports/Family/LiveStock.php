@@ -71,7 +71,7 @@ class LiveStock implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, 
 	 WHERE  s.is_deleted = 0 AND f.is_deleted = 0 AND fa.production_type ='Live Stock'  ";
 
         if ($isClusterSelected) {
-            $query .= " AND c.is_deleted = 0 ";
+            $query .= " AND c.is_deleted = 0 "; 
         }
 
         if (!empty($session_data['Search'])) {
@@ -146,6 +146,8 @@ class LiveStock implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, 
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -154,7 +156,7 @@ class LiveStock implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, 
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
 
             $res->production_sub_type1,

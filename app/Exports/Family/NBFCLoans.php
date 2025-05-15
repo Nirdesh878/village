@@ -157,12 +157,14 @@ class NBFCLoans implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, 
         // prd($query);
         $familys = DB::select($query);
         // prd($familys);
-        return collect($familys);
+        return collect($familys); 
     }
 
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -171,7 +173,7 @@ class NBFCLoans implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, 
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
 
             $res->lo_principle_amount1,

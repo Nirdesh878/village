@@ -144,7 +144,7 @@ class Assets implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, Fro
         $query .= "  GROUP BY f.id
          ";
         // prd($query);
-        $familys = DB::select($query);
+        $familys = DB::select($query); 
         // prd($familys);
         return collect($familys);
     }
@@ -152,6 +152,8 @@ class Assets implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, Fro
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->Wealth_Rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -160,7 +162,7 @@ class Assets implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, Fro
             $res->Shg_name,
             $res->Cluster_Name,
             $res->Fedeartion_Name,
-            $res->Wealth_Rank,
+            $wealthName,
             $res->RISK_RATING_SCORECARD,
             $res->land_type,
             $res->LAND_CULTIVATED_BY_FAMILY,

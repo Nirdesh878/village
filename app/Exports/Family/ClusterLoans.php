@@ -97,7 +97,7 @@ class ClusterLoans implements WithHeadings, ShouldAutoSize, WithEvents, WithTitl
             }
         }
 
-        $query .= " ORDER  BY f.id ) ";
+        $query .= " ORDER  BY f.id ) "; 
         // prd($query);
         $query .= "SELECT
          loans,
@@ -164,6 +164,8 @@ class ClusterLoans implements WithHeadings, ShouldAutoSize, WithEvents, WithTitl
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -172,7 +174,7 @@ class ClusterLoans implements WithHeadings, ShouldAutoSize, WithEvents, WithTitl
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
 
             $res->lo_principle_amount1,

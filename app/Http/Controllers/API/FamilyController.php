@@ -426,8 +426,16 @@ class FamilyController extends Controller
                                                             $family_members_info_details->malnutritions  = $family_members_info[$i]['malnutritions'];
                                                             $family_members_info_details->undernourished  = $family_members_info[$i]['undernourished'];
                                                             $family_members_info_details->vulnerable   = $family_members_info[$i]['vulnerable'];
+                                                            $family_members_info_details->employedChildren = !empty($family_members_info[$i]['employedChildren']) ? $family_members_info[$i]['employedChildren'] : 0;
+                                                            $family_members_info_details->isHealthIssue = !empty($family_members_info[$i]['isHealthIssue']) ? $family_members_info[$i]['isHealthIssue'] : 0;
+                                                            $family_members_info_details->insuranceAvl = !empty($family_members_info[$i]['insuranceAvl']) ? $family_members_info[$i]['insuranceAvl'] : 0;
+                                                            $family_members_info_details->insuranceType = !empty($family_members_info[$i]['insuranceType']) ? $family_members_info[$i]['insuranceType'] : 0;
+                                                            $family_members_info_details->policyName = !empty($family_members_info[$i]['policyName']) ? $family_members_info[$i]['policyName'] : '';
+                                                            $family_members_info_details->premiumAmount = !empty($family_members_info[$i]['premiumAmount']) ? $family_members_info[$i]['premiumAmount'] : '';
+                                                            $family_members_info_details->premiumAmount = !empty($family_members_info[$i]['premiumAmount']) ? $family_members_info[$i]['premiumAmount'] : '';
+                                                            $family_members_info_details->frequency = !empty($family_members_info[$i]['frequency']) ? $family_members_info[$i]['frequency'] : 0;
                                                             // $family_members_info_details->earning_description   = $family_members_info[$i]['earning_description'];
-                                                            $family_members_info_details->save();
+                                                            $family_members_info_details->save(); 
                                                         }
                                                     }
 

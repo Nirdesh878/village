@@ -70,10 +70,10 @@ class ProductionExpenditure implements WithHeadings, ShouldAutoSize, WithEvents,
         INNER JOIN family_expenditure_this_year AS fe
         ON f.id = fe.family_sub_mst_id
 
-     WHERE c.is_deleted = 0 AND s.is_deleted = 0 AND f.is_deleted = 0 AND fe.e_cat = 'Production/Business Expenses'";
+     WHERE s.is_deleted = 0 AND f.is_deleted = 0 AND fe.e_cat = 'Production/Business Expenses'";
 
         if ($isClusterSelected) {
-            $query .= " AND c.is_deleted = 0 ";
+            $query .= " AND c.is_deleted = 0 "; 
         }
 
         if (!empty($session_data['Search'])) {
@@ -105,6 +105,8 @@ class ProductionExpenditure implements WithHeadings, ShouldAutoSize, WithEvents,
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -113,7 +115,7 @@ class ProductionExpenditure implements WithHeadings, ShouldAutoSize, WithEvents,
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
 
             $res->Seeds,

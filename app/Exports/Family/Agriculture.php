@@ -38,7 +38,7 @@ class Agriculture implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle
 
         $query = "WITH Rankes AS (SELECT
             f.id,
-            f.uin,
+            f.uin, 
             fp.fp_member_name,
             fp.fp_wealth_rank,
             sp.shgName,
@@ -147,6 +147,8 @@ class Agriculture implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -155,7 +157,7 @@ class Agriculture implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
             $res->fa_land_type,
             $res->fa_total_land_owned,

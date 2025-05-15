@@ -73,7 +73,7 @@ class Business implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, F
         INNER JOIN family_business_investment_plan AS fb
         ON f.id = fb.family_sub_mst_id
         INNER JOIN family_loan_repayment AS fr
-        ON f.id = fr.family_sub_mst_id
+        ON f.id = fr.family_sub_mst_id 
         WHERE  s.is_deleted = 0 AND f.is_deleted = 0";
 
         if ($isClusterSelected) {
@@ -112,6 +112,8 @@ class Business implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, F
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -120,7 +122,7 @@ class Business implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, F
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
             $res->is_buisness_plan_avl,
             $res->type_of_category,

@@ -186,7 +186,7 @@
                                                     </div>
                                                     <div class="row align-items-center mb-2 d-flex">
                                                         <div class="col-8">
-                                                            <a href="<?php echo e(url('Family_Agriculture')); ?>" id="export">
+                                                            <a href="<?php echo e(url('Family_Agriculture')); ?>" id="export"> 
                                                                 <img src="<?php echo e(asset('assets\images\excel.png')); ?>"
                                                                     data-toggle="tooltip" title="Excel Export"
                                                                     data-src="<?php echo e(asset('assets\images\excel.png')); ?>"

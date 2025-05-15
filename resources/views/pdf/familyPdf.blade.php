@@ -111,9 +111,15 @@
             <tr>
 
                 <th width="25%">Gender</th>
-                <td width="25%">{{ checkna($family_profile[0]->fp_gender) }}</td>
+                @php
+                    $GenderData = getMstCommonData(1,$family_profile[0]->fp_gender  ?? null);
+                @endphp
+                <td>{{ $GenderData[0]->common_values ?? 'N/A' }}</td>
                 <th width="25%">Caste</th>
-                <td width="25%">{{ checkna($family_profile[0]->fp_caste) }}</td>
+                @php
+                    $CasteData = getMstCommonData(2,$family_profile[0]->fp_caste ?? null);
+                @endphp
+                <td>{{ $CasteData[0]->common_values ?? 'N/A' }}</td>
             </tr>
             <tr>
 
@@ -187,7 +193,10 @@
 
                 <th width="25%">Female Headed</th>
                 <td width="25%">
-                    {{ $family_profile[0]->fp_female_headed != '' ? $family_profile[0]->fp_female_headed : 'N/A' }}
+                    @php
+                        $FemaleHeadedData = getMstCommonData(3,$family_profile[0]->fp_female_headed ?? null);
+                    @endphp
+                    {{ $FemaleHeadedData[0]->common_values ?? 'N/A' }}
                 </td>
                 <th></th>
                 <td></td>
@@ -306,19 +315,40 @@
         </thead>
         <thead>
             @foreach ($family_member_info as $res)
+            @php
+                $MGenderData = getMstCommonData(1,$res->gender  ?? null);
+            @endphp
+            @php
+                $MRelationData = getMstCommonData(5,$res->relation  ?? null);
+            @endphp
+            @php
+                $MeducationData = getMstCommonData(6,$res->education  ?? null);
+            @endphp
+            @php
+                $MaritalStatusData = getMstCommonData(35,$res->maritalStatus  ?? null);
+            @endphp
+             @php
+                $malnutritionsData = getMstCommonData(3,$res->malnutritions  ?? null);
+            @endphp
+            @php
+                $differentlyAbledData = getMstCommonData(3,$res->differentlyAbled  ?? null);
+            @endphp
+            @php
+                $vulnerableData = getMstCommonData(3,$res->vulnerable  ?? null);
+            @endphp
                 <tr>
                     <td>{{ $res->name }}</td>
                     <td>{{ $res->dob }}</td>
                     <td>{{ $res->age }}</td>
-                    <td>{{ $res->gender }}</td>
-                    <td>{{ $res->relation }}</td>
-                    <td>{{ $res->education }}</td>
-                    <td>{{ $res->maritalStatus }}</td>
-                    <td>{{ $res->differentlyAbled != 0 ? 'Yes' : 'No' }}</td>
+                    <td>{{ $MGenderData[0]->common_values ?? 'N/A' }}</td>
+                    <td>{{ $MRelationData[0]->common_values ?? 'N/A' }}</td>
+                    <td>{{ $MeducationData[0]->common_values ?? 'N/A' }}</td>
+                    <td>{{ $MaritalStatusData[0]->common_values ?? 'N/A' }}</td>
+                    <td>{{ $differentlyAbledData[0]->common_values ?? 'N/A' }}</td>
                     <td>{{ $res->pension != 0 ? 'Yes' : 'No' }}</td>
                     <td>{{ $res->earning_description }}</td>
-                    <td>{{ $res->malnutritions != 0 ? 'Yes' : 'No' }}</td>
-                    <td>{{ $res->vulnerable != 0 ? 'Yes' : 'No' }}</td>
+                    <td>{{ $malnutritionsData[0]->common_values ?? 'N/A' }}</td>
+                    <td>{{ $vulnerableData[0]->common_values ?? 'N/A' }}</td>
                 </tr>
             @endforeach
 
@@ -337,7 +367,10 @@
             </tr>
             <tr>
                 <th width="40%" style="text-align: left;">Are you aware of Govt. Livelihood Programs?</th>
-                <th>{{ $family_profile[0]->gov_liveilhood_program }}</th>
+                @php
+                    $Gov_liveilhoodData = getMstCommonData(3,$family_profile[0]->gov_liveilhood_program   ?? null);
+                @endphp
+                <th>{{ $Gov_liveilhoodData[0]->common_values ?? 'N/A' }}</th>
                 <th></th>
             </tr>
         </thead>
@@ -386,10 +419,13 @@
         <tbody>
             <tr>
                 <th colspan=2 style="text-align: left;">A. Family not educated up to at least six years of schooling?</th>
-                <td colspan=2>{{ $family_profile[0]->family_member_not_educated }}</td>
+                @php
+                    $NotEducatedData = getMstCommonData(3,$family_profile[0]->family_member_not_educated   ?? null);
+                @endphp
+                <td colspan=2>{{ $NotEducatedData[0]->common_values ?? 'N/A' }}</td>
 
             </tr>
-            @if ($family_profile[0]->family_member_not_educated == 'Yes')
+            @if ($family_profile[0]->family_member_not_educated == 2)
                 <tr>
                     <th width="25%">i. Male</th>
                     <td width="25%">{{ $family_profile[0]->family_member_not_educatedMale }}</td>
@@ -409,10 +445,13 @@
         <tbody>
             <tr>
                 <th colspan=2 style="text-align: left;">B. Any children or adolescents up to age of 13 away from school or deopped out?</th>
-                <td colspan=2>{{ $family_profile[0]->children_or_adolescents_upto_age }}</td>
+                @php
+                    $childrenData = getMstCommonData(3,$family_profile[0]->children_or_adolescents_upto_age   ?? null);
+                @endphp
+                <td colspan=2>{{ $childrenData[0]->common_values ?? 'N/A' }}</td>
 
             </tr>
-            @if ($family_profile[0]->children_or_adolescents_upto_age == 'Yes')
+            @if ($family_profile[0]->children_or_adolescents_upto_age == 1)
                 <tr>
                     <th width="25%">i. Male</th>
                     <td width="25%">{{ $family_profile[0]->children_or_adolescents_uptoMale }}</td>
@@ -443,10 +482,13 @@
         <tbody>
             <tr>
                 <th colspan=2 style="text-align: left;">A. Family member have access to all three meals on a daily basis?</th>
-                <td colspan=2>{{ $family_profile[0]->aNutritionMortality }}</td>
+                @php
+                    $NutritionMoralityData = getMstCommonData(3,$family_profile[0]->aNutritionMortality   ?? null);
+                @endphp
+                <td colspan=2>{{ $NutritionMoralityData[0]->common_values ?? 'N/A' }}</td>
 
             </tr>
-            @if ($family_profile[0]->aNutritionMortality == 'No')
+            @if ($family_profile[0]->aNutritionMortality == 2)
                 <tr>
                     <th width="25%">i. Male</th>
                     <td width="25%">{{ $family_profile[0]->aNutritionMortalityMale }}</td>
@@ -466,10 +508,13 @@
         <tbody>
             <tr>
                 <th colspan=2 style="text-align: left;">B.Does any member suffer due to malnutrition?</th>
-                <td colspan=2>{{ $family_profile[0]->bNutritionMortality }}</td>
+                @php
+                    $bNutritionMoralityData = getMstCommonData(3,$family_profile[0]->bNutritionMortality   ?? null);
+                @endphp
+                <td colspan=2>{{ $bNutritionMoralityData[0]->common_values ?? 'N/A' }}</td>
 
             </tr>
-            @if ($family_profile[0]->bNutritionMortality == 'Yes')
+            @if ($family_profile[0]->bNutritionMortality == 1)
                 <tr>
                     <th width="25%">i. Male</th>
                     <td width="25%">{{ $family_profile[0]->bNutritionMortalityMale }}</td>
@@ -490,7 +535,10 @@
             <tr>
                 <th colspan=2 style="text-align: left;">C.Does any one of the children/adolescents or adults appear to be undernourished
                     (stunted,wasted,under-weight)?</th>
-                <td colspan=2>{{ $family_profile[0]->cNutritionMortality }}</td>
+                    @php
+                        $cNutritionMoralityData = getMstCommonData(3,$family_profile[0]->cNutritionMortality   ?? null);
+                    @endphp
+                <td colspan=2>{{ $cNutritionMoralityData[0]->common_values ?? 'N/A' }}</td>
 
             </tr>
             @if ($family_profile[0]->cNutritionMortality == 'Yes')
@@ -513,10 +561,13 @@
         <tbody>
             <tr>
                 <th colspan=2 style="text-align: left;">D.Have any children or adolescents died below age 18?</th>
-                <td colspan=2>{{ $family_profile[0]->dNutritionMortality }}</td>
+                @php
+                    $dNutritionMoralityData = getMstCommonData(3,$family_profile[0]->dNutritionMortality   ?? null);
+                @endphp
+                <td colspan=2>{{ $dNutritionMoralityData[0]->common_values ?? 'N/A' }}</td>
 
             </tr>
-            @if ($family_profile[0]->dNutritionMortality == 'Yes')
+            @if ($family_profile[0]->dNutritionMortality == 1)
                 <tr>
                     <th width="25%">i. Male</th>
                     <td width="25%">{{ $family_profile[0]->dNutritionMortalityMale }}</td>
@@ -546,20 +597,32 @@
         <tbody>
             <tr>
                 <th width="25%" style="text-align: left;">A.Sanitation Does the family</th>
-                <td width="25%">{{ $family_profile[0]->sanitation }}</td>
+                @php
+                    $SanitizationData = getMstCommonData(8,$family_profile[0]->sanitation   ?? null);
+                @endphp 
+                <td width="25%">{{ $SanitizationData[0]->common_values ?? 'N/A' }}</td>
             </tr>
             <tr>
                 <th width="25%" style="text-align: left;">B.Electricity Does the house they live in have electercity?</th>
-                <td width="25%">{{ $family_profile[0]->sElectricity }}</td>
+                @php
+                    $ElectricityData = getMstCommonData(3,$family_profile[0]->sElectricity   ?? null);
+                @endphp
+                <td width="25%">{{ $ElectricityData[0]->common_values ?? 'N/A' }}</td>
 
             </tr>
             <tr>
                 <th width="25%" style="text-align: left;">C.Drinking water Do they fetch water for drinking from</th>
-                <td width="25%">{{ $family_profile[0]->sDrinkingWater }}</td>
+                @php
+                    $DrinkingWaterData = getMstCommonData(9,$family_profile[0]->sDrinkingWater   ?? null);
+                @endphp
+                <td width="25%">{{ $DrinkingWaterData[0]->common_values ?? 'N/A' }}</td>
             </tr>
             <tr>
                 <th width="25%" style="text-align: left;">D.Cooking Fuel What is the method used by family</th>
-                <td width="25%">{{ $family_profile[0]->sCookingFuel }}</td>
+                @php
+                    $CookingFuelData = getMstCommonData(10,$family_profile[0]->sCookingFuel   ?? null);
+                @endphp 
+                <td width="25%">{{ $CookingFuelData[0]->common_values ?? 'N/A' }}</td>
             </tr>
 
 
@@ -654,7 +717,10 @@
         <tbody>
             <tr>
                 <th width="25%" style="text-align: left;">Has family migrated from other place during last 2 years/ Y/No </th>
-                <td width="25%">{{ checkna($family_profile[0]->fp_family_migrated) }}</td>
+                @php
+                    $MigratedData = getMstCommonData(12,$family_profile[0]->fp_family_migrated   ?? null);
+                @endphp
+                <td width="25%">{{ $MigratedData[0]->common_values ?? 'N/A' }}</td>
                 <th width="25%" style="text-align: left;">Member Reason Of Migration</th>
                 <td width="25%">{{ checkna($family_profile[0]->fp_family_reason_of_migration) }}</td>
 
@@ -672,7 +738,10 @@
         <tbody>
             <tr>
                 <th width="25%" style="text-align: left;">Wealth Rank</th>
-                <td width="25%">{{ $family_profile[0]->fp_wealth_rank }}</td>
+                @php
+                    $WealthData = getMstCommonData(7,$family_profile[0]->fp_wealth_rank ?? null);
+                @endphp
+                <td width="25%">{{ $WealthData[0]->common_values ?? 'N/A' }}</td>
                 <th width="25%"></th>
                 <td width="25%"></td>
             </tr>

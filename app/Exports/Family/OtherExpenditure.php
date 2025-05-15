@@ -95,7 +95,7 @@ class OtherExpenditure implements WithHeadings, ShouldAutoSize, WithEvents, With
         if (!empty($session_data['Search'])) {
             if (!empty($session_data['agency'])) {
                 $agency = $session_data['agency'];
-                $query .= " AND f.agency_id = $agency  ";
+                $query .= " AND f.agency_id = $agency  "; 
             }
             if (!empty($session_data['federation'])) {
                 $query .= " AND fed.uin = '" . $session_data['federation'] . "' ";
@@ -124,6 +124,8 @@ class OtherExpenditure implements WithHeadings, ShouldAutoSize, WithEvents, With
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -132,7 +134,7 @@ class OtherExpenditure implements WithHeadings, ShouldAutoSize, WithEvents, With
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
 
             $res->loan_amount,

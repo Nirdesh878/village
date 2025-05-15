@@ -58,7 +58,7 @@ class Challenges implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle,
         INNER JOIN federation_profile AS fedp
         ON fed.id = fedp.federation_sub_mst_id
         LEFT JOIN family_challenges AS fc
-        ON f.id = fc.family_sub_mst_id
+        ON f.id = fc.family_sub_mst_id 
 
 	 WHERE  s.is_deleted = 0 AND f.is_deleted = 0  ";
 
@@ -113,6 +113,8 @@ class Challenges implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle,
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -121,7 +123,7 @@ class Challenges implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle,
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
             $res->challenges1,
             $res->challenges2,

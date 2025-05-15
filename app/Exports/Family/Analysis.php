@@ -58,7 +58,7 @@ class Analysis implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, F
         INNER JOIN federation_mst as fed on  fed.uin = s.federation_uin
         INNER JOIN federation_profile AS fedp
         ON fed.id = fedp.federation_sub_mst_id
-        WHERE  s.is_deleted = 0 AND f.is_deleted = 0 ";
+        WHERE  s.is_deleted = 0 AND f.is_deleted = 0 "; 
 
         if ($isClusterSelected) {
             $query .= " AND c.is_deleted = 0 ";
@@ -103,6 +103,8 @@ class Analysis implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, F
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res['Wealth_Rank']);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -111,7 +113,7 @@ class Analysis implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, F
             $res['SHG_Nmae'],
             $res['Cluster_Name'],
             $res['Fedeartion_Name'],
-            $res['Wealth_Rank'],
+            $wealthName,
             $res['Rating_score'],
 
             (string)$res['analysis_1_cy'],
@@ -192,11 +194,6 @@ class Analysis implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, F
     function family_analysis($family_id)
     {
 
-        $session_data = Session::get('family_export_session');
-        // prd($session_data);
-
-        $isClusterSelected = !empty($session_data['cluster']);
-
         // pr($family_id);
         $query = "SELECT
             f.id,
@@ -208,22 +205,24 @@ class Analysis implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, F
             fedp.name_of_federation AS Fedeartion_Name,
             fp.analysis_rating AS Rating_score
          FROM
-            family_mst AS f 
-            INNER JOIN family_profile AS fp ON f.id = fp.family_sub_mst_id
-            INNER JOIN shg_mst AS s ON f.shg_uin = s.uin
-            INNER JOIN shg_profile AS sp ON s.id = sp.shg_sub_mst_id
-            LEFT JOIN cluster_mst AS c ON c.uin = s.cluster_uin
-            LEFT JOIN cluster_profile AS cp ON c.id = cp.cluster_sub_mst_id
-            INNER JOIN federation_mst as fed on  fed.uin = s.federation_uin
-            INNER JOIN federation_profile AS fedp
-            ON fed.id = fedp.federation_sub_mst_id
-            WHERE  s.is_deleted = 0 AND f.is_deleted = 0 AND f.id = $family_id
-            ORDER  BY f.id";
+             federation_mst AS fed
+              INNER JOIN federation_profile AS fedp
+              ON fed.id = fedp.federation_sub_mst_id
+              left JOIN
+             cluster_mst AS c
+             ON c.federation_uin = fed.uin
+             left JOIN cluster_profile AS cp
+             ON c.id = cp.cluster_sub_mst_id
+             INNER JOIN shg_mst AS s
+             ON fed.uin = s.federation_uin
+             INNER JOIN shg_profile AS sp
+             ON s.id = sp.shg_sub_mst_id
+             INNER JOIN family_mst AS f
+             ON f.shg_uin = s.uin
+             INNER JOIN family_profile AS fp ON f.id = fp.family_sub_mst_id
 
-        if ($isClusterSelected) {
-            $query .= " AND c.is_deleted = 0 ";
-        }
-
+              WHERE  s.is_deleted = 0 AND f.is_deleted = 0 AND f.id = $family_id
+              ORDER  BY f.id";
         $family_info = DB::select($query)[0];
         // prd($family_info);
         $data['id'] = $family_info->id;

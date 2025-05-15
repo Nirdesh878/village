@@ -65,7 +65,7 @@ class Horticulture implements WithHeadings, ShouldAutoSize, WithEvents, WithTitl
         LEFT JOIN cluster_profile AS cp ON c.id = cp.cluster_sub_mst_id
         INNER JOIN federation_mst as fed on  fed.uin = s.federation_uin
         INNER JOIN federation_profile AS fedp
-        ON fed.id = fedp.federation_sub_mst_id
+        ON fed.id = fedp.federation_sub_mst_id 
         INNER JOIN family_assets AS fas
         ON f.id = fas.family_sub_mst_id
         LEFT JOIN family_agriculture_production_this_year AS fa
@@ -148,6 +148,8 @@ class Horticulture implements WithHeadings, ShouldAutoSize, WithEvents, WithTitl
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -156,7 +158,7 @@ class Horticulture implements WithHeadings, ShouldAutoSize, WithEvents, WithTitl
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
             $res->fa_land_type,
             $res->fa_total_land_owned,

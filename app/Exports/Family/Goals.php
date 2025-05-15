@@ -68,7 +68,7 @@ class Goals implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, From
 
         if (!empty($session_data['Search'])) {
             if (!empty($session_data['agency'])) {
-                $agency = $session_data['agency'];
+                $agency = $session_data['agency']; 
                 $query .= " AND f.agency_id = $agency  ";
             }
             if (!empty($session_data['federation'])) {
@@ -115,6 +115,8 @@ class Goals implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, From
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -123,7 +125,7 @@ class Goals implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, From
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
             $res->Goal1,
             $res->Goal2,

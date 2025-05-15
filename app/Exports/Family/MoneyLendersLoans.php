@@ -80,7 +80,7 @@ class MoneyLendersLoans implements WithHeadings, ShouldAutoSize, WithEvents, Wit
 
         if (!empty($session_data['Search'])) {
             if (!empty($session_data['agency'])) {
-                $agency = $session_data['agency'];
+                $agency = $session_data['agency']; 
                 $query .= " AND f.agency_id = $agency  ";
             }
             if (!empty($session_data['federation'])) {
@@ -163,6 +163,8 @@ class MoneyLendersLoans implements WithHeadings, ShouldAutoSize, WithEvents, Wit
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -171,7 +173,7 @@ class MoneyLendersLoans implements WithHeadings, ShouldAutoSize, WithEvents, Wit
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
 
             $res->lo_principle_amount1,

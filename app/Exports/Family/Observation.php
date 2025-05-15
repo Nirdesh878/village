@@ -50,7 +50,40 @@ class Observation implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle
          (CASE  WHEN fo.loan_new_existing = 1 THEN 'yes'
                 WHEN fo.loan_new_existing = 0 THEN 'No' END)  AS loan_new_existing,
          fo.fdip_which_trade_loan ,
-         fo.fdip_observation_amount_of_loan
+         fo.fdip_observation_amount_of_loan,
+         GROUP_CONCAT(
+            CASE WHEN fom.husband = 1 THEN 'Husband' ELSE ''
+                END,
+                IF(fom.wife = 1, ',', ''),
+                CASE WHEN fom.wife = 1 THEN 'Wife' ELSE ''
+            END,
+            IF(fom.son = 1, ',', ''),
+            CASE WHEN fom.son = 1 THEN 'Son' ELSE ''
+            END,
+            IF(fom.daughter = 1, ',', ''),
+            CASE WHEN fom.daughter = 1 THEN 'Daughter' ELSE ''
+            END,
+            IF(fom.other_family_member != '', ',', ''),
+            fom.other_family_member
+            ) as participate_family,
+         
+            fo.fdip_observation_daily,
+            TRIM(BOTH ', ' FROM CONCAT_WS(', ',
+                NULLIF(fo.fdip_observation_highlights_a, ''),
+                NULLIF(fo.fdip_observation_highlights_b, ''),
+                NULLIF(fo.fdip_observation_highlights_c, ''),
+                NULLIF(fo.fdip_observation_highlights_d, ''),
+                NULLIF(fo.fdip_observation_highlights_e, '')
+            )) AS fdip_observation_highlights,
+         
+            TRIM(BOTH ', ' FROM CONCAT_WS(', ',
+                NULLIF(fo.fdip_observation_highlights_a_9, ''),
+                NULLIF(fo.fdip_observation_highlights_b_9, ''),
+                NULLIF(fo.fdip_observation_highlights_c_9, ''),
+                NULLIF(fo.fdip_observation_highlights_d_9, ''),
+                NULLIF(fo.fdip_observation_highlights_e_9, '')
+            )) AS other_observation
+
 
      FROM
         family_mst AS f 
@@ -64,13 +97,15 @@ class Observation implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle
         ON fed.id = fedp.federation_sub_mst_id
         INNER JOIN family_observation_this_year AS fo
         ON f.id = fo.family_sub_mst_id
-        WHERE  s.is_deleted = 0 AND f.is_deleted = 0";
+        INNER JOIN family_observation_this_year_member AS fom
+        ON f.id = fom.family_sub_mst_id
+        WHERE  s.is_deleted = 0 AND f.is_deleted = 0 ";
 
         if ($isClusterSelected) {
             $query .= " AND c.is_deleted = 0 ";
         }
 
-        if (!empty($session_data['Search'])) {
+        if (!empty($session_data['Search'])) { 
             if (!empty($session_data['agency'])) {
                 $agency = $session_data['agency'];
                 $query .= " AND f.agency_id = $agency  ";
@@ -89,8 +124,8 @@ class Observation implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle
             }
         }
 
-        $query .= "  ORDER BY f.id
-         ";
+        $query .= "group by f.id  ORDER BY f.id
+          ";
         // prd($query);
         $familys = DB::select($query);
         // prd($familys);
@@ -100,6 +135,8 @@ class Observation implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -108,13 +145,17 @@ class Observation implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
             $res->fdip_observation_agreement,
             $res->fdip_observation_agreement_edittext,
             $res->loan_new_existing,
             $res->fdip_which_trade_loan,
             $res->fdip_observation_amount_of_loan,
+            $res->participate_family,
+            $res->fdip_observation_daily,
+            $res->fdip_observation_highlights,
+            $res->other_observation
 
 
 
@@ -130,7 +171,7 @@ class Observation implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                $event->sheet->getStyle('A1:M1')->applyFromArray([
+                $event->sheet->getStyle('A1:Q1')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],
@@ -159,7 +200,11 @@ class Observation implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle
                 'Reason',
                 'Does family want to take other loan for existing or new business? (yes/ no)',
                 'What Trade?',
-                'Total Loan Amount asked'
+                'Total Loan Amount asked',
+                'Who participated in Discussion?',
+                'Give Highlights about this family - Who they are ?',
+                'What is special that you observed about this family?',
+                'Any other observations that you would like to describe here?'
             ]
         ];
     }

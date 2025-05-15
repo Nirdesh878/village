@@ -63,7 +63,8 @@ class Income implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, Fro
         COALESCE(fi.trade_income_amount,0) +
         COALESCE(fi.money_lending,0)+
         COALESCE(fi.pension_income_monthly,0)+
-        COALESCE(fi.other_income,0)) AS Total_Income
+        COALESCE(fi.other_income,0)) AS Total_Income,
+        case when fmi.relation='self' then fmi.earning_description else '' end AS  Earning_Description 
         --  fi.e_total_amount AS Total_Income
      FROM
         family_mst AS f 
@@ -77,6 +78,8 @@ class Income implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, Fro
         ON fed.id = fedp.federation_sub_mst_id
         INNER JOIN family_income_this_year AS fi
         ON f.id = fi.family_sub_mst_id
+        LEFT JOIN family_member_information AS fmi
+        ON f.id = fmi.family_sub_mst_id
 
 
      WHERE  s.is_deleted = 0 AND f.is_deleted = 0 ";
@@ -111,12 +114,14 @@ class Income implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, Fro
         // prd($query);
         $familys = DB::select($query);
         // prd($familys);
-        return collect($familys);
+        return collect($familys); 
     }
 
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -125,7 +130,7 @@ class Income implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, Fro
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
             $res->members,
             $res->agriculture,
@@ -138,6 +143,7 @@ class Income implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, Fro
             $res->PENSION,
             $res->OTHETR_INCOME,
             $res->Total_Income,
+            $res->Earning_Description,
 
         ];
     }
@@ -151,7 +157,7 @@ class Income implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, Fro
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                $event->sheet->getStyle('A1:S1')->applyFromArray([
+                $event->sheet->getStyle('A1:T1')->applyFromArray([
                     'font' => [
                         'bold' => true
                     ],
@@ -186,7 +192,8 @@ class Income implements WithHeadings, ShouldAutoSize, WithEvents, WithTitle, Fro
                 'INCOME FROM MONEY -LENDING',
                 'TOTAL PENSION FOR WHOLE FAMILY (amount)',
                 'TOTAL OTHERS INCOME FOR WHOLE FAMILY0,',
-                'TOTAL INCOME  (amount)'
+                'TOTAL INCOME  (amount)',
+                'Self Earning Description'
             ]
         ];
     }

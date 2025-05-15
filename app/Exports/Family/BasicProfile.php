@@ -161,6 +161,50 @@ class BasicProfile implements WithHeadings, ShouldAutoSize, WithEvents, WithTitl
     public function map($res): array
     {
 
+        $caste = getMstCommonData(2,$res->CASTE_OF_MEMBER);
+        $casteName = $caste->isNotEmpty() ? $caste[0]->common_values : 'N/A';
+        // prd($casteName);
+
+        $WealthData = getMstCommonData(7,$res->WEALTH_POVERTY_RANKING);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
+
+        $FemaleHeadedData = getMstCommonData(7,$res->FEMALE_HEADED);
+        $femaleHeadedName = $FemaleHeadedData->isNotEmpty() ? $FemaleHeadedData[0]->common_values : 'N/A';
+
+        $GenderData = getMstCommonData(1,$res->GENDER);
+        $genderName = $GenderData->isNotEmpty() ? $GenderData[0]->common_values : 'N/A';
+        // prd($genderName);
+
+        $MigrationData = getMstCommonData(12,$res->family_migration);
+        $migrationName = $MigrationData->isNotEmpty() ? $MigrationData[0]->common_values : 'N/A';
+        // prd($genderName);
+
+        $NutritionMoralityData = getMstCommonData(3,$res->aNutritionMortality);
+        $NutritionMoralityName = $NutritionMoralityData->isNotEmpty() ? $NutritionMoralityData[0]->common_values : 'N/A';
+
+        $bNutritionMoralityData = getMstCommonData(3,$res->bNutritionMortality);
+        $bNutritionMoralityName = $bNutritionMoralityData->isNotEmpty() ? $bNutritionMoralityData[0]->common_values : 'N/A';
+
+        $cNutritionMoralityData = getMstCommonData(3,$res->cNutritionMortality);
+        $cNutritionMoralityName = $cNutritionMoralityData->isNotEmpty() ? $cNutritionMoralityData[0]->common_values : 'N/A';
+
+        $SanitationData = getMstCommonData(8,$res->sanitation);
+        $SanitationName = $SanitationData->isNotEmpty() ? $SanitationData[0]->common_values : 'N/A';
+
+        $ElectricityData = getMstCommonData(3,$res->sElectricity);
+        $ElectricityName = $ElectricityData->isNotEmpty() ? $ElectricityData[0]->common_values : 'N/A';
+
+        $DrinkingWaterData = getMstCommonData(9,$res->sDrinkingWater);
+        $DrinkingWaterName = $DrinkingWaterData->isNotEmpty() ? $DrinkingWaterData[0]->common_values : 'N/A';
+
+        $CookingFuelData = getMstCommonData(10,$res->sCookingFuel);
+        $CookingFuelName = $CookingFuelData->isNotEmpty() ? $CookingFuelData[0]->common_values : 'N/A';
+
+        $gov_liveilhoodData = getMstCommonData(3,$res->gov_liveilhood_program);
+        $gov_liveilhoodName = $gov_liveilhoodData->isNotEmpty() ? $gov_liveilhoodData[0]->common_values : 'N/A';
+
+        $EducationData = getMstCommonData(6,$res->Member_Education_Level);
+        $EducationName = $EducationData->isNotEmpty() ? $EducationData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -169,16 +213,16 @@ class BasicProfile implements WithHeadings, ShouldAutoSize, WithEvents, WithTitl
             $res->NAME_OF_SHG,
             $res->CLUSTER_NAME,
             $res->FEDERATION_NAME,
-            $res->WEALTH_POVERTY_RANKING,
+            $wealthName,
             $res->RISK_RATING_SCORE_CARD,
-            $res->GENDER,
+            $genderName,
             $res->AGE,
-            $res->Member_Education_Level,
+            $EducationName,
             $res->STATE,
             $res->DISTRICT,
-            $res->CASTE_OF_MEMBER,
+            $casteName,
             $res->NAME_OF_SPOUSE,
-            $res->FEMALE_HEADED,
+            $femaleHeadedName,
             $res->BANK_ACCOUNT,
             $res->TOTAL_MEMBERS_PER_FAMILY,
             $res->NO_OF_CHILDREN,
@@ -198,25 +242,25 @@ class BasicProfile implements WithHeadings, ShouldAutoSize, WithEvents, WithTitl
             $res->diffrently_abled,
             $res->vulnerable,
             $res->fp_earning_an_income,
-            $res->family_migration,
+            $migrationName,
             $res->fp_family_reason_of_migration,
-            $res->aNutritionMortality,
+            $NutritionMoralityName,
             $res->aNutritionMortalityMale,
             $res->aNutritionMortalityFeMale,
-            $res->bNutritionMortality,
+            $bNutritionMoralityName,
             $res->bNutritionMortalityMale,
             $res->bNutritionMortalityFeMale,
-            $res->cNutritionMortality,
+            $cNutritionMoralityName,
             $res->cNutritionMortalityMale,
             $res->cNutritionMortalityFeMale,
-            $res->sanitation,
-            $res->sElectricity,
-            $res->sDrinkingWater,
-            $res->sCookingFuel,
+            $SanitationName,
+            $ElectricityName,
+            $DrinkingWaterName,
+            $CookingFuelName,
             $res->sHealthIssues,
             $res->sHealthIssuesMale,
             $res->sHealthIssuesFeMale,
-            $res->gov_liveilhood_program,
+            $gov_liveilhoodName,
             $res->program,
 
 

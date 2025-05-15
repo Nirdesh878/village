@@ -241,7 +241,7 @@ Route::middleware(['has_access'])->group(function () {
     Route::get('/SHGExport', [App\Http\Controllers\ShgController::class , 'export']);
     Route::get('/shgPDF', [App\Http\Controllers\ShgController::class , 'shgPDF']);
     Route::get('/FamilyExport', [App\Http\Controllers\FamilyController::class , 'export']);
-    Route::get('/familyPDF', [App\Http\Controllers\FamilyController::class , 'familyPDF']);
+    Route::get('/familyPDF', [App\Http\Controllers\FamilyController::class , 'familyPDF']); 
     Route::get('send-email', [SendEmailController::class, 'index']);
     Route::get('/usersPdf', [App\Http\Controllers\UsersController::class , 'export_usersPdf']);
     Route::get('/federationDetailsCardPdf/{id}', [App\Http\Controllers\FederationController::class, 'federationDetailsCardPdf']);

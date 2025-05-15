@@ -112,7 +112,10 @@
                 <th width="25%" style="text-align: left;">Name of SHG</th>
                 <td width="25%">{{ $shg_profile[0]->shgName }}</td>
                 <th width="25%" style="text-align: left;">Gender</th>
-                <td width="25%">{{ checkna($family_profile[0]->fp_gender) }}</td>
+                @php
+                    $GenderData = getMstCommonData(1,$family_profile[0]->fp_gender  ?? null);
+                @endphp
+                <td>{{ $GenderData[0]->common_values ?? 'N/A' }}</td>
             </tr>
             
             <tr>

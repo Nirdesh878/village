@@ -68,7 +68,7 @@ class MemberCommitment implements WithHeadings, ShouldAutoSize, WithEvents, With
         INNER JOIN federation_profile AS fedp
         ON fed.id = fedp.federation_sub_mst_id
         INNER JOIN family_shgmember_commitment AS fs
-        ON f.id = fs.family_sub_mst_id
+        ON f.id = fs.family_sub_mst_id 
 
 
           WHERE  s.is_deleted = 0 AND f.is_deleted = 0";
@@ -109,6 +109,8 @@ class MemberCommitment implements WithHeadings, ShouldAutoSize, WithEvents, With
     public function map($res): array
     {
 
+        $WealthData = getMstCommonData(7,$res->fp_wealth_rank);
+        $wealthName = $WealthData->isNotEmpty() ? $WealthData[0]->common_values : 'N/A';
 
         return [
             $this->counter++,
@@ -117,7 +119,7 @@ class MemberCommitment implements WithHeadings, ShouldAutoSize, WithEvents, With
             $res->shgName,
             $res->name_of_cluster,
             $res->name_of_federation,
-            $res->fp_wealth_rank,
+            $wealthName,
             $res->analysis_rating,
             $res->yo_meeting_yes_no,
             $res->yo_meeting_attend,
